@@ -1,4 +1,4 @@
-
+## MODIFIED Requirements
 
 ### Requirement: Google sign-in via Supabase OAuth
 
@@ -37,28 +37,6 @@ Additionally, the system SHALL expose an invisible email/password login method v
 - **WHEN** the sign-in page is rendered
 - **THEN** no visible UI element for debug login SHALL be present
 - **AND** the debug method SHALL only be accessible programmatically via `window.__debugLogin`
-
-### Requirement: Server verifies Supabase JWT
-
-The server SHALL verify the Supabase JWT on every API request using the JWKS (JSON Web Key Set) endpoint at `https://<project>.supabase.co/auth/v1/.well-known/jwks.json`. The server fetches and caches Supabase's public keys, verifies JWT signatures locally, and extracts the user identity. Unauthenticated or invalid-token requests SHALL be rejected with a 401 status.
-
-#### Scenario: Valid JWT in request
-- **WHEN** the client sends a request with a valid Supabase JWT
-- **THEN** the server SHALL accept the request and provide the user identity to the route handler
-
-#### Scenario: Missing or invalid JWT
-- **WHEN** the client sends a request without a JWT or with an invalid/expired JWT
-- **THEN** the server SHALL reject the request with a 401 Unauthorized response
-
-### Requirement: Sign-out
-
-The system SHALL provide a sign-out action that clears the user's session on both the client and Supabase.
-
-#### Scenario: User signs out
-- **WHEN** a signed-in user clicks "Sign out"
-- **THEN** the system SHALL clear the local session
-- **AND** the system SHALL invalidate the session with Supabase
-- **AND** the user SHALL be redirected to the sign-in page
 
 ## Debug User Credentials
 
