@@ -52,4 +52,4 @@
 - [x] 8.3 Verify `/healthz` responds 200 consistently over a 2-minute window
 - [x] 8.4 Verify authenticated `character.list` returns 200 with data (using a temp Supabase user or the existing test user)
 - [x] 8.5 Verify the characters list loads in the browser at `https://dnd-weekend-test.fly.dev/characters`
-- [ ] 8.6 Re-deploy and re-verify after the migration entry point and Dockerfile changes (tasks 3-6)
+- [x] 8.6 Re-deploy and re-verify after the migration entry point and Dockerfile changes (tasks 3-6)
