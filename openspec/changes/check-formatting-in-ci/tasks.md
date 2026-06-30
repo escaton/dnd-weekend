@@ -13,4 +13,4 @@
 
 - [x] 3.1 Run `pnpm format:check` locally and confirm it exits 0
 - [x] 3.2 Temporarily introduce an unformatted file, run `pnpm format:check`, confirm it exits non-zero, then revert the file
-- [ ] 3.3 Push the branch, open a PR, and confirm the CI workflow runs the new `format:check` step and the run passes
+- [x] 3.3 Push the branch, open a PR, and confirm the CI workflow runs the new `format:check` step and the run passes
