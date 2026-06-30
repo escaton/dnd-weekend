@@ -99,4 +99,4 @@
 
 - [x] 11.1 Create `.github/workflows/deploy-prod.yml` — triggers via `workflow_dispatch` with optional input for commit SHA
 - [x] 11.2 Workflow checks out specified commit and runs `flyctl deploy --config fly.prod.toml` (fly.io builds from source)
-- [ ] 11.3 Verify manual prod deploy works and prod app is healthy
+- [x] 11.3 Verify manual prod deploy works and prod app is healthy
