@@ -14,8 +14,9 @@ The `@dnd-weekend/api` package's `package.json` `exports` field points to `.ts` 
 **Goals:**
 - Eliminate OOM kills on the 256 MB test VM by removing the runtime transpiler
 - Produce compiled JavaScript that `node` can run directly in production
-- Keep the dev workflow identical (`tsx watch` with HMR)
-- Single build command, minimal Dockerfile changes
+- Eliminate `node_modules` from the runtime Docker image entirely (~200MB waste)
+- Co-locate DB concerns (migrations, config) with the server app
+- Keep the dev workflow identical (`tsx watch` with HMR, `drizzle-kit generate` for new migrations)
 
 **Non-Goals:**
 - Changing the dev workflow or dev tooling
@@ -61,11 +62,34 @@ The `@dnd-weekend/api` package's `package.json` `exports` field points to `.ts` 
 
 **Rationale:** 10 pooled connections is excessive for a single-machine app on a 256 MB VM. Each connection holds a TCP socket and buffer memory. 3 connections is sufficient for the concurrency limits in `fly.test.toml` (soft 200, hard 250 requests) since most requests are sub-100ms DB queries. This is a secondary memory optimization that complements the primary fix (removing tsx).
 
-### 6. Dockerfile: build in builder stage, copy dist to runtime
+### 6. Dockerfile: build in builder stage, no node_modules in runtime
 
-**Decision:** Add `pnpm --filter @dnd-weekend/server build` to the builder stage (after web build), copy `apps/server/dist/` to the runtime stage, and change the CMD to `node dist/index.js`.
+**Decision:** Build both `index.js` and `migrate.js` in the builder stage. Runtime stage copies only `dist/` and `migrations/` — no `pnpm install`, no `node_modules`.
 
-**Rationale:** The builder stage already has all source and devDependencies installed. esbuild runs in the builder, produces `dist/index.js`, and the runtime stage only needs the compiled output plus runtime dependencies. The runtime stage no longer needs `apps/server/src/` (TS source) or `tsx` as a dependency. The runtime still needs `packages/api/src/` if anything references it at runtime, but with bundling the api source is inlined — so we can skip copying it.
+**Rationale:** The server bundle is fully self-contained (only Node builtins externalized). The previous approach still ran `pnpm install` in runtime for `drizzle-kit` (needed by the `pnpm db:migrate` release command) — 243MB of `node_modules` with ~200MB of pure waste (babel, typescript compiler, oxlint, prettier, vitest, husky). By replacing `drizzle-kit migrate` with a bundled `migrate.js` that uses `drizzle-orm`'s migrator directly, the runtime needs zero npm packages.
+
+### 7. Bundled `migrate.ts` instead of `drizzle-kit migrate`
+
+**Decision:** Add `apps/server/src/migrate.ts` as a second esbuild entry point. It uses `drizzle-orm/postgres-js/migrator`'s `migrate()` function — the same code `drizzle-kit migrate` calls internally — but bundled into a standalone `dist/migrate.js`.
+
+**Rationale:** `drizzle-kit` is a 9.7MB CLI tool with heavy deps (esbuild, tsx, @esbuild-kit/*). We only need it for `generate` (creating new migration files from schema diffs), not `migrate` (applying them). The migrator itself is a few lines: `readMigrationFiles()` + `db.dialect.migrate()`. Bundling it eliminates the only reason `node_modules` existed in the runtime image.
+
+**Alternatives considered:**
+- **Keep `drizzle-kit migrate` in runtime**: Requires `pnpm install` + 243MB `node_modules` in the runtime image. Defeats the purpose of prebuilding.
+- **Run migrations in builder stage**: Migrations run at build time, not deploy time. Schema changes would apply before the new image is deployed, causing version mismatch.
+- **Pre-bundle `drizzle-kit` with esbuild**: `drizzle-kit` is a CLI tool with complex internals (commands, prompts, dotenv). Bundling it is fragile and over-engineered for running a single `migrate()` call.
+
+### 8. Co-locate drizzle config and migrations in `apps/server/`
+
+**Decision:** Move `drizzle.config.ts` and `drizzle/migrations/` from the repo root into `apps/server/`. Move `drizzle-kit` from root to `apps/server/devDependencies`. Remove `db:*` scripts from root `package.json`.
+
+**Rationale:** DB concerns (migrations, schema, config) are server-specific. Co-locating them with the server app means:
+- `migrate.ts` references `../migrations/` relative to itself (works regardless of CWD)
+- `drizzle-kit generate` runs from `apps/server` with `--config drizzle.config.ts`
+- Root `package.json` is cleaner (no DB-specific scripts)
+- The `drizzle/` folder doesn't need to be copied separately in the Dockerfile — it's part of `apps/server/`
+
+**Verified:** `drizzle-kit generate --config drizzle.config.ts` works from `apps/server/` with `schema: "../../packages/api/src/db/schema.ts"` and `out: "./migrations"`. Local migrations run via `node --env-file=../../.env dist/migrate.js` (same env-file pattern as the server's `dev` script).
 
 ## Risks / Trade-offs
 
@@ -74,3 +98,5 @@ The `@dnd-weekend/api` package's `package.json` `exports` field points to `.ts` 
 - **[Dev/prod divergence]** Dev uses tsx (transpiles per-file, no bundling); prod uses esbuild (bundles everything). Subtle differences in how each handles edge cases (e.g., `__dirname` polyfills, JSON imports). → Mitigation: Both target ESM; the code already avoids CJS-isms. The `fileURLToPath(import.meta.url)` pattern works in both.
 - **[api package not independently built]** The api package has no `build` step. If a second consumer (besides server and web-type-import) is added later, it would need its own build. → Mitigation: Only two consumers exist; web imports types only, server bundles source. Revisit if a third consumer appears.
 - **[Connection pool too low]** Reducing to 3 could bottleneck under high concurrency. → Mitigation: Fly concurrency limits cap at 250 requests; 3 pooled connections with sub-100ms queries handles this. Monitor and adjust if needed.
+- **[drizzle-kit path resolution]** Moving `drizzle.config.ts` to `apps/server/` means `drizzle-kit generate` must run from that directory with `--config`. → Mitigation: Verified `drizzle-kit generate --config drizzle.config.ts` works from `apps/server/` with relative `schema` path to `../../packages/api/src/db/schema.ts`. Package.json scripts handle this.
+- **[Migration file location drift]** If someone runs `drizzle-kit generate` from root (old habit), it creates `./drizzle/` instead of `apps/server/migrations/`. → Mitigation: Root `db:*` scripts removed; `drizzle.config.ts` no longer at root so drizzle-kit won't find a default config there.
