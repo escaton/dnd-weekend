@@ -50,6 +50,6 @@
 - [x] 8.1 Trigger the deploy-test GitHub Action on the PR branch
 - [x] 8.2 Verify the test Fly machine stays alive without OOM kills for at least 5 minutes (`fly logs -a dnd-weekend-test`)
 - [x] 8.3 Verify `/healthz` responds 200 consistently over a 2-minute window
-- [x] 8.4 Verify authenticated `character.list` returns 200 with data (using a temp Supabase user or the existing test user)
+- [x] 8.4 Verify authenticated `character.list` returns 200 with data (sign in as debug user `debug@dnd-weekend.local` from the spec, not a temp user)
 - [x] 8.5 Verify the characters list loads in the browser at `https://dnd-weekend-test.fly.dev/characters`
 - [x] 8.6 Re-deploy and re-verify after the migration entry point and Dockerfile changes (tasks 3-6)

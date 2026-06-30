@@ -44,3 +44,17 @@ The server's Postgres connection pool SHALL be sized conservatively for small VM
 - **WHEN** the server creates a Postgres connection pool
 - **THEN** the pool SHALL have a maximum of 3 connections
 - **AND** the pool SHALL not exceed the memory budget of a 256 MB VM
+
+### Requirement: Verification uses spec-defined debug user
+
+Verification tasks and automated tests that require authentication SHALL use the debug user credentials documented in the `user-auth` spec (`debug@dnd-weekend.local` / `111111`). Verification SHALL NOT create temporary users via the Supabase admin API.
+
+#### Scenario: Authenticated API verification
+- **WHEN** a verification task needs to test an authenticated API endpoint
+- **THEN** it SHALL sign in using the debug user credentials from the spec
+- **AND** it SHALL NOT create a temporary user via the Supabase admin API
+
+#### Scenario: Browser-based verification
+- **WHEN** a verification task needs to test the app in a browser
+- **THEN** it SHALL use `window.__debugLogin` with the debug user credentials
+- **AND** it SHALL NOT create a temporary user via the Supabase admin API
