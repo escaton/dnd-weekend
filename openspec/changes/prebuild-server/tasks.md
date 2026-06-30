@@ -19,9 +19,9 @@
 
 ## 4. Branch and PR
 
-- [ ] 4.1 Create a branch `feat/prebuild-server` from main
-- [ ] 4.2 Commit all changes with a descriptive message
-- [ ] 4.3 Push the branch and create a PR to main
+- [x] 4.1 Create a branch `feat/prebuild-server` from main
+- [x] 4.2 Commit all changes with a descriptive message
+- [x] 4.3 Push the branch and create a PR to main
 - [ ] 4.4 Verify CI (lint, typecheck, tests) passes on the PR
 
 ## 5. Deploy to test and verify
