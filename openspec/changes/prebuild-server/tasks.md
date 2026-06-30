@@ -22,12 +22,12 @@
 - [x] 4.1 Create a branch `feat/prebuild-server` from main
 - [x] 4.2 Commit all changes with a descriptive message
 - [x] 4.3 Push the branch and create a PR to main
-- [ ] 4.4 Verify CI (lint, typecheck, tests) passes on the PR
+- [x] 4.4 Verify CI (lint, typecheck, tests) passes on the PR
 
 ## 5. Deploy to test and verify
 
-- [ ] 5.1 Trigger the deploy-test GitHub Action on the PR branch (`gh workflow run deploy-test.yml --ref feat/prebuild-server` or merge then dispatch)
-- [ ] 5.2 Verify the test Fly machine stays alive without OOM kills for at least 5 minutes (`fly logs -a dnd-weekend-test`)
-- [ ] 5.3 Verify `/healthz` responds 200 consistently over a 2-minute window
-- [ ] 5.4 Verify authenticated `character.list` returns 200 with data (using a temp Supabase user or the existing test user)
-- [ ] 5.5 Verify the characters list loads in the browser at `https://dnd-weekend-test.fly.dev/characters`
+- [x] 5.1 Trigger the deploy-test GitHub Action on the PR branch (`gh workflow run deploy-test.yml --ref feat/prebuild-server` or merge then dispatch)
+- [x] 5.2 Verify the test Fly machine stays alive without OOM kills for at least 5 minutes (`fly logs -a dnd-weekend-test`)
+- [x] 5.3 Verify `/healthz` responds 200 consistently over a 2-minute window
+- [x] 5.4 Verify authenticated `character.list` returns 200 with data (using a temp Supabase user or the existing test user)
+- [x] 5.5 Verify the characters list loads in the browser at `https://dnd-weekend-test.fly.dev/characters`
