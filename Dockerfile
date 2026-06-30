@@ -16,6 +16,7 @@ RUN pnpm rebuild esbuild
 
 COPY . .
 RUN pnpm --filter @dnd-weekend/web build
+RUN pnpm --filter @dnd-weekend/server build
 
 FROM node:24-alpine AS runtime
 RUN corepack enable
@@ -29,10 +30,7 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 RUN pnpm rebuild esbuild
 
 COPY --from=builder /app/apps/web/dist apps/web/dist
-COPY apps/server/src apps/server/src
-COPY apps/server/tsconfig.json apps/server/tsconfig.json
-COPY packages/api/src packages/api/src
-COPY packages/api/tsconfig.json packages/api/tsconfig.json
+COPY --from=builder /app/apps/server/dist apps/server/dist
 COPY drizzle/ drizzle/
 COPY drizzle.config.ts ./
 COPY tsconfig.json ./
