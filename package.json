@@ -23,10 +23,10 @@
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
       "oxlint --fix",
-      "oxfmt"
+      "oxfmt --no-error-on-unmatched-pattern"
     ],
     "*.{json,yaml,yml,toml}": [
-      "oxfmt"
+      "oxfmt --no-error-on-unmatched-pattern"
     ]
   },
   "engines": {
