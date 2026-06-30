@@ -16,6 +16,6 @@
 ## 3. Verify
 
 - [x] 3.1 Verify `window.__debugLogin(email, password)` works in local dev — signs in and navigates to `/characters`
-- [ ] 3.2 Verify debug login works on test env (https://dnd-weekend-test.fly.dev)
+- [x] 3.2 Verify debug login works on test env (https://dnd-weekend-test.fly.dev)
 - [x] 3.3 Verify tRPC calls succeed after debug login (character.list returns 200)
 - [ ] 3.4 Verify Google OAuth still works alongside debug login
