@@ -3,6 +3,7 @@ primary_region = "iad"
 
 [build]
 dockerfile = "Dockerfile"
+args = { VITE_SUPABASE_URL = "https://lxxstgzlmbziwdpkillo.supabase.co", VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_IIRJAqAC19lXpWPjRfBgqg_mbg7ML6n" }
 
 [deploy]
 release_command = "pnpm db:migrate"
