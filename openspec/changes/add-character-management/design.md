@@ -11,7 +11,7 @@ Tech stack: Node.js 24, React, TypeScript 7 RC, Supabase (auth, postgres, S3 sto
 - Implement Google sign-in via Supabase with combined login/signup (no separate registration flow)
 - Implement character CRUD (create, list, soft-delete) with loose jsonb content
 - Set up CI (lint, test, typecheck) on PRs and pushes to main
-- Set up CD: build Docker image in CI, push to fly registry, deploy to two fly apps (test auto, prod manual)
+- Set up CD: fly.io builds Docker image from source, deploys to two fly apps (both manual dispatch)
 - Configure tooling: TypeScript 7 RC, oxlint, oxfmt, precommit hooks, vitest
 
 **Non-Goals:**
@@ -72,17 +72,20 @@ Tech stack: Node.js 24, React, TypeScript 7 RC, Supabase (auth, postgres, S3 sto
 **Alternatives considered**:
 - Separate static hosting (e.g., fly.io for API, Cloudflare Pages for client) — two deploys per env, more moving parts, not needed for a weekend project
 
-### 6. Docker build in CI, push to fly registry
+### 6. fly.io builds images, GitHub only triggers deploy
 
-**Choice**: GitHub Actions builds the multi-stage Docker image, pushes to `registry.fly.io`, then `fly deploy --image <tag>`.
+**Choice**: GitHub Actions runs `flyctl deploy --config fly.toml` which triggers fly.io to build the Docker image from source remotely. No Docker build in CI, no image registry, no runtime secrets in GitHub.
 
-**Rationale**: Image is a deterministic artifact tagged by commit SHA. Rollback = `fly deploy --image <old-sha>`. Test auto-deploys on push to main; prod deploys via manual `workflow_dispatch` (promote a specific SHA).
+**Rationale**: Simpler CI — no Docker buildx, no registry auth, no image push. Only `FLY_API_TOKEN` lives in GitHub secrets (a deploy credential, not a runtime secret). VITE build args (publishable keys, safe in repo) are passed via `fly.toml` `[build] args`. Runtime secrets (Supabase URL, secret key, database URL) live in fly secrets, set via `flyctl secrets set`.
 
-**Note**: fly registry is per-app, so test and prod have separate image namespaces. "Promote same artifact from test to prod" requires rebuilding from the same commit SHA in the prod workflow (simpler than cross-registry push for a weekend project).
+Both test and prod deploys are manual `workflow_dispatch` — triggered from the GitHub Actions UI or `gh workflow run`.
+
+**Rollback**: `flyctl deploy --rollback` reverts to the previous release.
 
 **Alternatives considered**:
-- fly.io builds from source (`fly deploy --remote-only`) — simplest, but no image artifact retained; rollback only via `fly apps undo` or rebuild from old commit
-- GH Actions → GHCR — images in GitHub Container Registry, more discoverable; rejected in favor of fly registry to keep everything in one platform
+- GitHub Actions builds, pushes to fly registry — more CI complexity, image artifacts to manage, runtime secrets in GitHub
+- GitHub Actions → GHCR — images in GitHub Container Registry, more discoverable, but unnecessary for this project
+- fly.io builds from source with test auto-deploy on push to main — considered, but manual control preferred for now
 
 ### 7. Two environments: test and prod
 
@@ -122,7 +125,7 @@ characters
 
 - **TypeScript 7 RC is pre-release** → Drizzle, Vite, oxlint all claim compat, but edge cases may surface. Mitigation: pin exact versions, watch for type errors that don't match expected behavior, fall back to TS 5.x if blocking.
 - **oxfmt is young** → may have formatting gaps for non-TS files (JSON, YAML). Mitigation: if gaps appear, use prettier for non-JS files as a hybrid.
-- **fly registry is per-app** → test and prod images live in separate namespaces; "promote exact same artifact" requires rebuild from same SHA. Mitigation: prod workflow rebuilds from the pinned commit, which is deterministic.
+- **fly.io builds from source** → no image artifact retained; rollback via `flyctl deploy --rollback`. Acceptable for a weekend project.
 - **Local dev mutates test env** → local development connects to the test Supabase project, so dev changes affect shared test data. Mitigation: acceptable for solo weekend work; if a second developer joins, add a local Supabase via Docker or a third "dev" project.
 - **App-managed `updated_at`** → raw SQL updates bypass the timestamp. Mitigation: all updates go through Drizzle; if raw SQL is needed later, add a Postgres trigger then.
 - **Loose jsonb content** → no validation on content shape, so client could send malformed data. Mitigation: server validates that content is a JSON object (`z.record(z.unknown())`); structure validation deferred to when rich UI is designed.
@@ -135,8 +138,8 @@ characters
 4. **API**: implement tRPC router (character CRUD), Hono server with tRPC adapter, JWT verification middleware
 5. **Client**: implement Vite + React + TanStack Router + Query, tRPC client, sign-in page, character list + create + delete UI (basic)
 6. **CI**: GitHub Actions workflow for lint/test/typecheck
-7. **CD**: Dockerfile, fly.toml (test + prod), deploy workflows (auto-test, manual-prod)
-8. **Rollback**: `fly deploy --image registry.fly.io/<app>:<old-sha> --app <app>`
+7. **CD**: Dockerfile, fly.toml (test + prod), deploy workflows (both manual dispatch)
+8. **Rollback**: `flyctl deploy --rollback --config fly.toml`
 
 ## Resolved Decisions (previously open questions)
 

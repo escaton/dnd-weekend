@@ -72,9 +72,9 @@
 
 ## 8. Docker and fly.io setup
 
-- [x] 8.1 Create multi-stage `Dockerfile` (stage 1: install deps + build client and server; stage 2: runtime with only dist/ and server bundle)
+- [x] 8.1 Create multi-stage `Dockerfile` (stage 1: install deps + build client; stage 2: runtime with dist/ and server TS source, runs via tsx)
 - [x] 8.2 Create `.dockerignore` (node_modules, .env, .git, dist, etc.)
-- [x] 8.3 Create `fly.test.toml` for test app (dnd-weekend-test) with health check on `/healthz` and `[deploy] release_command = "pnpm db:migrate"`
+- [x] 8.3 Create `fly.test.toml` for test app (dnd-weekend-test) with health check on `/healthz`, `[deploy] release_command = "pnpm db:migrate"`, and `[build] args` for VITE vars
 - [x] 8.4 Create `fly.prod.toml` for prod app (dnd-weekend-prod) with health check on `/healthz` and `[deploy] release_command = "pnpm db:migrate"`
 - [x] 8.5 Create fly apps: `dnd-weekend-test` and `dnd-weekend-prod` via `fly apps create`
 - [x] 8.6 Set fly secrets for both apps (Supabase URL, keys, database URL, NODE_ENV)
@@ -89,18 +89,14 @@
 - [x] 9.5 Add test step (vitest)
 - [x] 9.6 Verify CI runs and passes on a PR
 
-## 10. GitHub Actions: deploy-test (auto)
+## 10. GitHub Actions: deploy-test (manual)
 
-- [x] 10.1 Create `.github/workflows/deploy-test.yml` — triggers on push to main (after CI passes, via `workflow_run` or job dependency)
-- [x] 10.2 Add Docker build step (multi-stage build from Dockerfile)
-- [x] 10.3 Tag image with commit SHA, push to `registry.fly.io/dnd-weekend-test`
-- [x] 10.4 Deploy to fly: `fly deploy --image registry.fly.io/dnd-weekend-test:<sha> --app dnd-weekend-test`
-- [x] 10.5 Verify test env auto-deploys on a push to main
+- [x] 10.1 Create `.github/workflows/deploy-test.yml` — triggers via manual `workflow_dispatch`
+- [x] 10.2 Workflow runs `flyctl deploy --config fly.test.toml` (fly.io builds image from source)
+- [x] 10.3 Verify test deploy works via manual dispatch
 
 ## 11. GitHub Actions: deploy-prod (manual)
 
 - [x] 11.1 Create `.github/workflows/deploy-prod.yml` — triggers via `workflow_dispatch` with optional input for commit SHA
-- [x] 11.2 Add Docker build step from specified commit (or checkout specific SHA)
-- [x] 11.3 Tag image with commit SHA, push to `registry.fly.io/dnd-weekend-prod`
-- [x] 11.4 Deploy to fly: `fly deploy --image registry.fly.io/dnd-weekend-prod:<sha> --app dnd-weekend-prod`
-- [ ] 11.5 Verify manual prod deploy works and prod app is healthy
+- [x] 11.2 Workflow checks out specified commit and runs `flyctl deploy --config fly.prod.toml` (fly.io builds from source)
+- [ ] 11.3 Verify manual prod deploy works and prod app is healthy

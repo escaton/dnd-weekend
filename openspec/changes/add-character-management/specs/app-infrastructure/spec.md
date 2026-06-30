@@ -57,43 +57,43 @@ The project SHALL have a GitHub Actions CI workflow that runs lint, typecheck, a
 - **WHEN** a commit is pushed to the main branch
 - **THEN** the CI workflow SHALL run lint, typecheck, and unit tests
 
-### Requirement: Docker image built in CI
+### Requirement: Docker image built by fly.io
 
-The project SHALL have a multi-stage Dockerfile that builds the client and server into a single image. The image SHALL be built in GitHub Actions and pushed to the fly.io registry. Each image SHALL be tagged with its commit SHA.
+The project SHALL have a multi-stage Dockerfile that builds the client and server into a single image. The image SHALL be built by fly.io from source during `flyctl deploy`. VITE build arguments (publishable keys, safe for client) SHALL be passed via `fly.toml` `[build] args`. No runtime secrets SHALL be stored in GitHub — only `FLY_API_TOKEN` (a deploy credential).
 
-#### Scenario: Image built and pushed on push to main
-- **WHEN** a commit is pushed to the main branch and CI passes
-- **THEN** the deploy-test workflow SHALL build the Docker image
-- **AND** the image SHALL be tagged with the commit SHA
-- **AND** the image SHALL be pushed to registry.fly.io for the test app
+#### Scenario: Image built by fly.io during deploy
+- **WHEN** the deploy workflow runs `flyctl deploy --config fly.toml`
+- **THEN** fly.io SHALL build the Docker image from source using the Dockerfile
+- **AND** VITE build arguments SHALL be passed from `fly.toml` `[build] args`
+- **AND** runtime secrets SHALL be provided via fly secrets (not GitHub secrets)
 
-### Requirement: Test environment auto-deploys on push to main
+### Requirement: Test environment deploys via manual dispatch
 
-The project SHALL have a deploy-test GitHub Actions workflow that triggers automatically on push to main (after CI passes). It SHALL build the Docker image, push to the fly registry, and deploy to the test fly app.
+The project SHALL have a deploy-test GitHub Actions workflow that triggers via manual `workflow_dispatch`. It SHALL run `flyctl deploy --config fly.test.toml` which builds the image on fly.io and deploys to the test fly app.
 
-#### Scenario: Successful push to main triggers test deploy
-- **WHEN** a commit is pushed to main and CI passes
-- **THEN** the deploy-test workflow SHALL build and push the image
-- **AND** SHALL deploy the image to the dnd-weekend-test fly app
+#### Scenario: Manual test deploy
+- **WHEN** a user manually triggers the deploy-test workflow
+- **THEN** the workflow SHALL run `flyctl deploy --config fly.test.toml`
+- **AND** fly.io SHALL build the image from source and deploy to the dnd-weekend-test fly app
 
 ### Requirement: Production environment deploys via manual dispatch
 
-The project SHALL have a deploy-prod GitHub Actions workflow that triggers via manual `workflow_dispatch`. It SHALL build the Docker image from a specified commit, push to the fly registry, and deploy to the prod fly app.
+The project SHALL have a deploy-prod GitHub Actions workflow that triggers via manual `workflow_dispatch` with an optional commit SHA input. It SHALL run `flyctl deploy --config fly.prod.toml` which builds the image on fly.io and deploys to the prod fly app.
 
 #### Scenario: Manual production deploy
 - **WHEN** a user manually triggers the deploy-prod workflow
-- **THEN** the workflow SHALL build the Docker image from the specified commit
-- **AND** SHALL push the image to registry.fly.io for the prod app
-- **AND** SHALL deploy the image to the dnd-weekend-prod fly app
+- **THEN** the workflow SHALL check out the specified commit (or latest main)
+- **AND** SHALL run `flyctl deploy --config fly.prod.toml`
+- **AND** fly.io SHALL build the image from source and deploy to the dnd-weekend-prod fly app
 
-### Requirement: Rollback via image tag
+### Requirement: Rollback via flyctl
 
-The system SHALL support rollback by deploying a previously tagged image from the fly registry. Rolling back SHALL be possible by running `fly deploy --image registry.fly.io/<app>:<sha> --app <app>` with a prior commit's SHA tag.
+The system SHALL support rollback by running `flyctl deploy --rollback --config fly.toml` which reverts to the previous release. No image registry or manual SHA tagging is required.
 
 #### Scenario: Rollback to a previous version
-- **WHEN** a user runs `fly deploy --image registry.fly.io/<app>:<old-sha> --app <app>`
-- **THEN** the fly app SHALL deploy the previously built image
-- **AND** the app SHALL revert to the state of that commit
+- **WHEN** a user runs `flyctl deploy --rollback --config fly.toml`
+- **THEN** the fly app SHALL revert to the previous release
+- **AND** the app SHALL serve the previous version
 
 ### Requirement: Health check endpoint
 

@@ -1,5 +1,5 @@
 app = "dnd-weekend-test"
-primary_region = "iad"
+primary_region = "ams"
 
 [build]
 dockerfile = "Dockerfile"
@@ -14,6 +14,7 @@ force_https = true
 auto_stop_machines = true
 auto_start_machines = true
 min_machines_running = 0
+max_machines_running = 1
 
 [http_service.concurrency]
 type = "requests"
