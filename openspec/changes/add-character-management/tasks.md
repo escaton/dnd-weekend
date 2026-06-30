@@ -87,7 +87,7 @@
 - [x] 9.3 Add lint step (oxlint)
 - [x] 9.4 Add typecheck step (`tsc --noEmit` across workspaces)
 - [x] 9.5 Add test step (vitest)
-- [ ] 9.6 Verify CI runs and passes on a PR
+- [x] 9.6 Verify CI runs and passes on a PR
 
 ## 10. GitHub Actions: deploy-test (auto)
 
@@ -95,7 +95,7 @@
 - [x] 10.2 Add Docker build step (multi-stage build from Dockerfile)
 - [x] 10.3 Tag image with commit SHA, push to `registry.fly.io/dnd-weekend-test`
 - [x] 10.4 Deploy to fly: `fly deploy --image registry.fly.io/dnd-weekend-test:<sha> --app dnd-weekend-test`
-- [ ] 10.5 Verify test env auto-deploys on a push to main
+- [x] 10.5 Verify test env auto-deploys on a push to main
 
 ## 11. GitHub Actions: deploy-prod (manual)
 
