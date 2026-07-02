@@ -54,14 +54,14 @@
 
 ## 7. Create Cloudflare Resources
 
-- [x] 7.1 Create Cloudflare project `dnd-weekend-test` (via `wrangler pages project create`)
-- [x] 7.2 Create Cloudflare project `dnd-weekend` (via `wrangler pages project create`)
+- [x] 7.1 Create Cloudflare Worker `dnd-weekend-test` (created on first `wrangler deploy`)
+- [x] 7.2 Create Cloudflare Worker `dnd-weekend` (created on first `wrangler deploy`)
 - [x] 7.3 Create Hyperdrive config for test (pointing at test Supabase Postgres connection string)
 - [x] 7.4 Create Hyperdrive config for prod (pointing at prod Supabase Postgres connection string)
 - [x] 7.5 Update `apps/web/wrangler.jsonc` with real Hyperdrive config IDs (test ID in config, prod ID in deploy workflow)
 - [x] 7.6 Set non-secret vars for test (`SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` in `wrangler.jsonc` vars)
 - [x] 7.7 Set non-secret vars for prod (in deploy-prod workflow inline config)
-- [x] 7.8 Set secrets for test (`SUPABASE_SECRET_KEY` set via `wrangler pages secret put` — but not used by Worker, orphaned)
+- [x] 7.8 Set secrets for test (`SUPABASE_SECRET_KEY` set via `wrangler secret put` — but not used by Worker, orphaned)
 - [x] 7.9 Set secrets for prod (same — orphaned, `SUPABASE_SECRET_KEY` not used by Worker or client)
 
 ## 8. Verify Build and Deploy
@@ -80,3 +80,23 @@
 - [x] 9.3 Delete Fly.io app `dnd-weekend-prod`
 - [x] 9.4 Remove `FLY_API_TOKEN` from GitHub secrets (no longer needed)
 - [x] 9.5 Update root `package.json` scripts if `dev` script references `apps/server` (should now be `pnpm --filter @dnd-weekend/web dev`)
+
+## 10. Runtime Injection of Supabase Client Config
+
+- [x] 10.1 Add `"binding": "ASSETS"` to the `assets` block in `apps/web/wrangler.jsonc` so the Worker can programmatically fetch assets via `env.ASSETS.fetch(request)`
+- [x] 10.2 Update `apps/web/worker/index.ts` — intercept `/` and `/index.html` requests: fetch the HTML via `env.ASSETS.fetch(request)`, inject `<script>window.__SUPABASE__={url,key}</script>` from `env.SUPABASE_URL` and `env.SUPABASE_PUBLISHABLE_KEY` into `<head>`, return the modified HTML. Non-HTML and non-`/` requests fall through to the existing tRPC handler / static asset serving.
+- [x] 10.3 Update `apps/web/src/lib/supabase.ts` — read `window.__SUPABASE__.url` and `window.__SUPABASE__.key` instead of `import.meta.env.VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY`. Throw a clear error if `window.__SUPABASE__` is undefined.
+- [x] 10.4 Remove `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` from `.env.example`. Remove the "Client (Vite exposes these...)" comment block.
+- [x] 10.5 Verify prod build + deploy: confirm the client talks to the prod Supabase project (not test) — check the Network tab for the correct Supabase URL after `window.__debugLogin`.
+- [x] 10.6 Verify test build + deploy: confirm the client talks to the test Supabase project via the same build artifact.
+- [x] 10.7 Document the local-dev open question in `design.md` (Vite dev server serves `index.html`, not the Worker — `window.__SUPABASE__` is undefined until a follow-up change adds a dev-time shim).
+
+## 11. Wrangler Environments for Per-Environment Config
+
+- [x] 11.1 Spike: verify that `env.prod.name` in `wrangler.jsonc` correctly overrides the top-level `name` in the flattened output config when building with `CLOUDFLARE_ENV=prod`. Build a minimal test config, run `CLOUDFLARE_ENV=prod vite build`, and inspect `dist/dnd_weekend_test/wrangler.json` to confirm `name` is `"dnd-weekend"`.
+- [x] 11.2 Spike: verify that `env.prod.hyperdrive` (full array with prod Hyperdrive ID) correctly overrides the top-level `hyperdrive` in the flattened output config. Inspect the built `wrangler.json` to confirm the prod Hyperdrive ID is present.
+- [x] 11.3 Add `env.prod` block to `apps/web/wrangler.jsonc` with: `name: "dnd-weekend"`, `hyperdrive: [{ binding: "HYPERDRIVE", id: "<prod-id>" }]`, `vars: { SUPABASE_URL: "<prod-url>", SUPABASE_PUBLISHABLE_KEY: "<prod-key>" }`. Shared fields (main, compat, flags, assets, observability) stay at top level and are inherited.
+- [x] 11.4 Rewrite `.github/workflows/deploy-prod.yml` — replace the `node -e` config mutation step with `CLOUDFLARE_ENV=prod pnpm --filter @dnd-weekend/web build`. The deploy step stays `wrangler deploy --config apps/web/dist/dnd_weekend_test/wrangler.json` (the Vite plugin uses the top-level `name` for the output directory, so both environments output to `dist/dnd_weekend_test/`).
+- [x] 11.5 Verify `.github/workflows/deploy-test.yml` still works unchanged (builds with no `CLOUDFLARE_ENV`, uses top-level defaults, deploys from `dist/dnd_weekend_test/wrangler.json`).
+- [x] 11.6 Verify the built prod config (`dist/dnd_weekend_test/wrangler.json` after `CLOUDFLARE_ENV=prod` build) contains the correct prod Worker name, prod Hyperdrive ID, and prod Supabase vars — no `env` block, fully flattened.
+- [x] 11.7 Verify the built test config (`dist/dnd_weekend_test/wrangler.json`) is unchanged from before (test name, test Hyperdrive ID, test Supabase vars).

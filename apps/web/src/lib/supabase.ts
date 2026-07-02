@@ -1,15 +1,19 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+declare global {
+  interface Window {
+    __SUPABASE__?: { url: string; key: string };
+  }
+}
 
-if (!supabaseUrl || !supabasePublishableKey) {
+const config = window.__SUPABASE__;
+if (!config) {
   throw new Error(
-    "Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY environment variables",
+    "window.__SUPABASE__ is undefined — the Worker must inject Supabase config into index.html",
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
+export const supabase = createClient(config.url, config.key, {
   auth: {
     detectSessionInUrl: true,
     persistSession: true,

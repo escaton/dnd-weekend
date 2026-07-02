@@ -1,4 +1,4 @@
-
+## MODIFIED Requirements
 
 ### Requirement: pnpm monorepo structure
 
@@ -10,73 +10,6 @@ The project SHALL be a pnpm monorepo with workspaces. It SHALL contain `apps/web
 - **AND** the Workers runtime SHALL run locally via workerd
 - **AND** the Worker API SHALL be served on the same origin as the Vite dev server
 - **AND** no CORS configuration SHALL be needed in development
-
-### Requirement: TypeScript strict mode
-
-The project SHALL use TypeScript 7 RC with strict mode enabled across all workspaces. All packages SHALL share a common `tsconfig` base with strict settings.
-
-#### Scenario: Typecheck runs in CI
-- **WHEN** CI runs the typecheck command
-- **THEN** all workspaces SHALL be typechecked with strict mode
-- **AND** any type error SHALL fail the CI run
-
-### Requirement: Linting with oxlint
-
-The project SHALL use oxlint for linting across all workspaces. Linting SHALL run in CI and as a precommit hook.
-
-#### Scenario: Lint runs in CI
-- **WHEN** CI runs the lint command
-- **THEN** oxlint SHALL check all source files
-- **AND** any lint error SHALL fail the CI run
-
-### Requirement: Formatting with oxfmt
-
-The project SHALL use oxfmt for code formatting. Formatting SHALL be enforced via a precommit hook that formats staged files, and SHALL be verified in CI so that unformatted code cannot be merged even when local hooks are bypassed. The CI format check SHALL run `oxfmt --check .` (read-only) and SHALL fail the CI run on any unformatted file. oxfmt SHALL ignore non-source docs (`openspec/**` and `.opencode/**`) via `.oxfmtrc.json` `ignorePatterns`, mirroring the oxlint ignore patterns.
-
-#### Scenario: Developer commits unformatted code
-- **WHEN** a developer stages and commits files that are not formatted per oxfmt
-- **THEN** the precommit hook SHALL format the staged files before the commit completes
-
-#### Scenario: Format check runs in CI
-- **WHEN** CI runs the format check command on a pull request or push to `main`
-- **THEN** oxfmt SHALL check all source files in `--check` mode
-- **AND** any unformatted file SHALL fail the CI run
-
-### Requirement: Unit tests with vitest
-
-The project SHALL use vitest for unit tests. Tests SHALL run in CI on PRs and pushes to main.
-
-#### Scenario: Tests run in CI
-- **WHEN** CI runs the test command
-- **THEN** vitest SHALL execute all unit tests
-- **AND** any failing test SHALL fail the CI run
-
-### Requirement: CI pipeline on GitHub Actions
-
-The project SHALL have a GitHub Actions CI workflow that runs lint, typecheck, and unit tests. The workflow SHALL trigger on pull requests and on pushes to the main branch.
-
-#### Scenario: Pull request opened
-- **WHEN** a pull request is opened or updated
-- **THEN** the CI workflow SHALL run lint, typecheck, and unit tests
-
-#### Scenario: Push to main
-- **WHEN** a commit is pushed to the main branch
-- **THEN** the CI workflow SHALL run lint, typecheck, and unit tests
-
-### Requirement: Worker build for production
-
-The Worker API SHALL be built by Vite with `@cloudflare/vite-plugin` as part of the `apps/web` build. The build SHALL produce static assets in the Vite output directory and a Worker bundle handled by wrangler. The `@dnd-weekend/api` package source SHALL be bundled into the Worker at build time. No TypeScript transpiler SHALL be loaded at runtime — the Worker runs prebuilt JavaScript. The dev workflow SHALL use Vite's dev server with the Workers runtime (workerd) for local development with HMR.
-
-#### Scenario: Production build
-- **WHEN** the build command runs
-- **THEN** Vite SHALL build the React client to static assets
-- **AND** the Vite plugin SHALL bundle the Worker entry at `apps/web/worker/index.ts` with all dependencies (including `@dnd-weekend/api` source) into a Worker bundle
-- **AND** wrangler SHALL use the generated output configuration for deployment
-
-#### Scenario: Development server startup
-- **WHEN** a developer runs the dev command
-- **THEN** Vite SHALL start with the Workers runtime via workerd
-- **AND** HMR SHALL reload both the client and the Worker on file changes
 
 ### Requirement: Test environment deploys via manual dispatch
 
@@ -124,22 +57,49 @@ The project SHALL have two deployment environments: test and prod. Each environm
 - **AND** a `.env.example` file SHALL be checked in documenting all required environment variables
 - **AND** `DATABASE_URL` SHALL NOT be required at runtime (Hyperdrive manages the connection); it SHALL only be used by the migration runner in CI
 
-### Requirement: Runtime injection of Supabase client config
+## REMOVED Requirements
 
-The Supabase URL and publishable key SHALL be provided to the client at request time by the Worker, not baked into the client bundle at build time. The Worker SHALL run first for all routes except hashed assets (`run_worker_first: ["/*", "!/assets/*"]`). API routes (`/api/*`) SHALL be handled by the tRPC handler. All other requests SHALL be fetched via the `ASSETS` binding. The Worker SHALL use `HTMLRewriter` to inject `window.__SUPABASE__ = { url, key }` from `env.SUPABASE_URL` and `env.SUPABASE_PUBLISHABLE_KEY` into the `<head>` element of HTML responses. Non-HTML responses (served directly from assets, bypassing the Worker) SHALL pass through unmodified. The client SHALL read Supabase configuration from `window.__SUPABASE__`, not from `import.meta.env.VITE_SUPABASE_*`. The build artifact SHALL be environment-agnostic — the same build SHALL deploy to test and prod without rebuilding. `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` SHALL NOT be required at build time. Local dev works via the Vite plugin's workerd runtime, which runs the Worker (including `HTMLRewriter` injection) in development mode.
+### Requirement: Docker image built by fly.io
 
-#### Scenario: Client receives Supabase config at runtime
-- **WHEN** a browser requests any path (including client-side routes like `/characters`)
-- **THEN** the Worker SHALL fetch the response via the `ASSETS` binding
-- **AND** the Worker SHALL use `HTMLRewriter` to inject `window.__SUPABASE__` from `env.SUPABASE_URL` and `env.SUPABASE_PUBLISHABLE_KEY` into the `<head>` element
-- **AND** hashed assets under `/assets/*` SHALL bypass the Worker and be served directly
-- **AND** the client SHALL initialize the Supabase client from `window.__SUPABASE__`
+**Reason**: The project no longer uses Docker or Fly.io. Static assets are served by Cloudflare's CDN and the API runs as a Worker.
+**Migration**: Build and deploy are now handled by Vite + wrangler. The `Dockerfile`, `fly.prod.toml`, and `fly.test.toml` files are deleted.
 
-#### Scenario: Environment-agnostic build
+### Requirement: Health check endpoint
+
+**Reason**: Cloudflare Workers does not require a custom health check endpoint. The platform handles availability monitoring.
+**Migration**: The `/healthz` endpoint is removed. No replacement is needed.
+
+### Requirement: Server prebuilt for production
+
+**Reason**: There is no separate Node.js server. The API runs as a Cloudflare Worker, built by Vite + wrangler, not esbuild.
+**Migration**: See the ADDED requirement "Worker build for production" for the new build process.
+
+### Requirement: Database connection pool sized for small VMs
+
+**Reason**: Hyperdrive manages connection pooling. The application no longer configures pool sizes.
+**Migration**: See the ADDED requirement "Database connection via Hyperdrive" for the new connection mechanism.
+
+### Requirement: Rollback via flyctl
+
+**Reason**: Fly.io is no longer the deployment platform. Rollback is handled by Cloudflare.
+**Migration**: See the ADDED requirement "Rollback via Cloudflare" for the new rollback mechanism.
+
+## ADDED Requirements
+
+### Requirement: Worker build for production
+
+The Worker API SHALL be built by Vite with `@cloudflare/vite-plugin` as part of the `apps/web` build. The build SHALL produce static assets in the Vite output directory and a Worker bundle handled by wrangler. The `@dnd-weekend/api` package source SHALL be bundled into the Worker at build time. No TypeScript transpiler SHALL be loaded at runtime — the Worker runs prebuilt JavaScript. The dev workflow SHALL use Vite's dev server with the Workers runtime (workerd) for local development with HMR.
+
+#### Scenario: Production build
 - **WHEN** the build command runs
-- **THEN** the client bundle SHALL NOT contain a hardcoded Supabase URL or publishable key
-- **AND** the same build output SHALL be deployable to both test and prod without rebuilding
-- **AND** the Worker SHALL supply per-environment values from its bindings at request time
+- **THEN** Vite SHALL build the React client to static assets
+- **AND** the Vite plugin SHALL bundle the Worker entry at `apps/web/worker/index.ts` with all dependencies (including `@dnd-weekend/api` source) into a Worker bundle
+- **AND** wrangler SHALL use the generated output configuration for deployment
+
+#### Scenario: Development server startup
+- **WHEN** a developer runs the dev command
+- **THEN** Vite SHALL start with the Workers runtime via workerd
+- **AND** HMR SHALL reload both the client and the Worker on file changes
 
 ### Requirement: Database connection via Hyperdrive
 
@@ -166,16 +126,19 @@ The system SHALL support rollback via Cloudflare Workers versions rollback. A ro
 - **THEN** the Worker SHALL revert to the previous version
 - **AND** the site SHALL serve the previous version
 
-### Requirement: Verification uses spec-defined debug user
+### Requirement: Runtime injection of Supabase client config
 
-Verification tasks and automated tests that require authentication SHALL use the debug user credentials documented in the `user-auth` spec (`debug@dnd-weekend.local` / `111111`). Verification SHALL NOT create temporary users via the Supabase admin API.
+The Supabase URL and publishable key SHALL be provided to the client at request time by the Worker, not baked into the client bundle at build time. The Worker SHALL run first for all routes except hashed assets (`run_worker_first: ["/*", "!/assets/*"]`). API routes (`/api/*`) SHALL be handled by the tRPC handler. All other requests SHALL be fetched via the `ASSETS` binding. The Worker SHALL use `HTMLRewriter` to inject `window.__SUPABASE__ = { url, key }` from `env.SUPABASE_URL` and `env.SUPABASE_PUBLISHABLE_KEY` into the `<head>` element of HTML responses. Non-HTML responses (served directly from assets, bypassing the Worker) SHALL pass through unmodified. The client SHALL read Supabase configuration from `window.__SUPABASE__`, not from `import.meta.env.VITE_SUPABASE_*`. The build artifact SHALL be environment-agnostic — the same build SHALL deploy to test and prod without rebuilding. `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` SHALL NOT be required at build time. Local dev works via the Vite plugin's workerd runtime, which runs the Worker (including `HTMLRewriter` injection) in development mode.
 
-#### Scenario: Authenticated API verification
-- **WHEN** a verification task needs to test an authenticated API endpoint
-- **THEN** it SHALL sign in using the debug user credentials from the spec
-- **AND** it SHALL NOT create a temporary user via the Supabase admin API
+#### Scenario: Client receives Supabase config at runtime
+- **WHEN** a browser requests any path (including client-side routes like `/characters`)
+- **THEN** the Worker SHALL fetch the response via the `ASSETS` binding
+- **AND** the Worker SHALL use `HTMLRewriter` to inject `window.__SUPABASE__` from `env.SUPABASE_URL` and `env.SUPABASE_PUBLISHABLE_KEY` into the `<head>` element
+- **AND** hashed assets under `/assets/*` SHALL bypass the Worker and be served directly
+- **AND** the client SHALL initialize the Supabase client from `window.__SUPABASE__`
 
-#### Scenario: Browser-based verification
-- **WHEN** a verification task needs to test the app in a browser
-- **THEN** it SHALL use `window.__debugLogin` with the debug user credentials
-- **AND** it SHALL NOT create a temporary user via the Supabase admin API
+#### Scenario: Environment-agnostic build
+- **WHEN** the build command runs
+- **THEN** the client bundle SHALL NOT contain a hardcoded Supabase URL or publishable key
+- **AND** the same build output SHALL be deployable to both test and prod without rebuilding
+- **AND** the Worker SHALL supply per-environment values from its bindings at request time

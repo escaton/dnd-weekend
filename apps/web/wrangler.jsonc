@@ -1,23 +1,43 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "dnd-weekend-test",
+  "name": "dnd-weekend",
   "main": "./worker/index.ts",
   "compatibility_date": "2026-07-01",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
+    "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-  },
-  "hyperdrive": [
-    {
-      "binding": "HYPERDRIVE",
-      "id": "fbd30e15253843f58f7d7c2abf0375ba",
-    },
-  ],
-  "vars": {
-    "SUPABASE_URL": "https://lxxstgzlmbziwdpkillo.supabase.co",
-    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_IIRJAqAC19lXpWPjRfBgqg_mbg7ML6n",
+    "run_worker_first": ["/*", "!/assets/*"],
   },
   "observability": {
     "enabled": true,
+  },
+  "env": {
+    "test": {
+      "name": "dnd-weekend-test",
+      "hyperdrive": [
+        {
+          "binding": "HYPERDRIVE",
+          "id": "fbd30e15253843f58f7d7c2abf0375ba",
+        },
+      ],
+      "vars": {
+        "SUPABASE_URL": "https://lxxstgzlmbziwdpkillo.supabase.co",
+        "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_IIRJAqAC19lXpWPjRfBgqg_mbg7ML6n",
+      },
+    },
+    "prod": {
+      "name": "dnd-weekend",
+      "hyperdrive": [
+        {
+          "binding": "HYPERDRIVE",
+          "id": "9971f47dd14e4ac8b2c1d1171bd9ff33",
+        },
+      ],
+      "vars": {
+        "SUPABASE_URL": "https://spkpguayatzjdpoodmwd.supabase.co",
+        "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_7LQE7f82V9_87NkU9kXqWw_Jy7F6xQJ",
+      },
+    },
   },
 }

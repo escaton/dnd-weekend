@@ -24,10 +24,9 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL_TEST }}
 
       - name: Build
-        run: pnpm --filter @dnd-weekend/web build
+        run: CLOUDFLARE_ENV=test pnpm --filter @dnd-weekend/web build
 
       - name: Deploy to Cloudflare
-        run: npx wrangler deploy --config apps/web/dist/dnd_weekend_test/wrangler.json
+        run: npx wrangler deploy --config apps/web/dist/dnd_weekend/wrangler.json --name dnd-weekend-test
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

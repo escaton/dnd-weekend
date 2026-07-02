@@ -31,25 +31,9 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
 
       - name: Build
-        run: pnpm --filter @dnd-weekend/web build
-
-      - name: Configure prod deployment
-        run: |
-          node -e "
-            const fs = require('fs');
-            const configPath = 'apps/web/dist/dnd_weekend_test/wrangler.json';
-            const config = JSON.parse(fs.readFileSync(configPath));
-            config.name = 'dnd-weekend';
-            config.hyperdrive[0].id = '9971f47dd14e4ac8b2c1d1171bd9ff33';
-            config.vars = {
-              SUPABASE_URL: 'https://spkpguayatzjdpoodmwd.supabase.co',
-              SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_7LQE7f82V9_87NkU9kXqWw_Jy7F6xQJ'
-            };
-            fs.writeFileSync(configPath, JSON.stringify(config));
-          "
+        run: CLOUDFLARE_ENV=prod pnpm --filter @dnd-weekend/web build
 
       - name: Deploy to Cloudflare
-        run: npx wrangler deploy --config apps/web/dist/dnd_weekend_test/wrangler.json
+        run: npx wrangler deploy --config apps/web/dist/dnd_weekend/wrangler.json --name dnd-weekend
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

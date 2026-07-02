@@ -7,20 +7,20 @@ The tRPC fetch adapter and `jose` JWT verification are already runtime-agnostic 
 ## Goals / Non-Goals
 
 **Goals:**
-- Move from Fly.io + Docker to Cloudflare Pages + Workers (static assets + Worker API)
+- Move from Fly.io + Docker to Cloudflare Workers + Static Assets (static assets + Worker API in one deployment)
 - Keep Drizzle ORM, tRPC, Supabase Auth — only the runtime and connection mechanism change
 - Use Hyperdrive (free tier, 100k queries/day) for Postgres connection pooling
 - Use `@cloudflare/vite-plugin` for local dev (single `vite dev`, workerd runtime, no CORS)
-- Two Pages projects (test + prod), each with its own Hyperdrive config and Supabase project
+- Two Workers (test + prod), each with its own Hyperdrive config and Supabase project
 - Migrations run in GitHub Actions as a pre-deploy gate (fail deploy if migrations fail)
-- Free `*.pages.dev` domains, HTTPS, global CDN
+- Free `*.<account-subdomain>.workers.dev` domains, HTTPS, global CDN
 
 **Non-Goals:**
 - Migrating away from Supabase (Postgres + Auth stay)
 - Migrating away from Drizzle ORM
-- Using preview deployments as the test environment (two separate Pages projects instead)
+- Using preview deployments as the test environment (two separate Workers instead)
 - Using PostgREST/HTTP driver (keeping `postgres-js` via Hyperdrive TCP)
-- Adding a custom domain (using free `*.pages.dev` subdomains)
+- Adding a custom domain (using free `*.workers.dev` subdomains)
 
 ## Decisions
 
@@ -80,11 +80,11 @@ The tRPC fetch adapter and `jose` JWT verification are already runtime-agnostic 
 - *`drizzle-kit push`*: Schema-to-DB diff without migration files. Loses migration history and auditability.
 - *Supabase CLI (`supabase db push`)*: Uses a separate migration tracking system incompatible with Drizzle's `drizzle` schema migration journal. Would require maintaining two sets of migration files.
 
-### 6. Two Pages projects, two manual workflows
+### 6. Two Workers, two manual workflows
 
-**Choice**: Create two Cloudflare Pages projects (`dnd-weekend-test`, `dnd-weekend`). Two GitHub Actions workflows (`deploy-test`, `deploy-prod`), both `workflow_dispatch`. Each runs migrations against its environment's Supabase DB, then deploys to its Pages project via `wrangler pages deploy`. Each Pages project has its own Hyperdrive binding (pointing at test/prod Supabase) and its own dashboard vars/secrets.
+**Choice**: Create two Cloudflare Workers (`dnd-weekend-test`, `dnd-weekend`). Two GitHub Actions workflows (`deploy-test`, `deploy-prod`), both `workflow_dispatch`. Each runs migrations against its environment's Supabase DB, then deploys its Worker via `wrangler deploy`. Each Worker has its own Hyperdrive binding (pointing at test/prod Supabase) and its own dashboard vars/secrets.
 
-**Why**: Mirrors the current Fly setup (two apps, two manual workflows). Provides stable, predictable URLs (`dnd-weekend-test.pages.dev`, `dnd-weekend.pages.dev`). No ambiguity about which environment a deployment targets.
+**Why**: Mirrors the current Fly setup (two apps, two manual workflows). Provides stable, predictable URLs (`dnd-weekend-test.<account-subdomain>.workers.dev`, `dnd-weekend.<account-subdomain>.workers.dev`). No ambiguity about which environment a deployment targets.
 
 **Alternatives considered**:
 - *Preview deployments as test env*: Simpler but no stable test URL. Each PR gets a unique hash-based URL. Not suitable for a shared test environment.
@@ -95,6 +95,40 @@ The tRPC fetch adapter and `jose` JWT verification are already runtime-agnostic 
 **Choice**: Move `migrations/` and `drizzle.config.ts` from `apps/server/` to `packages/api/`. The schema already lives in `packages/api/src/db/schema.ts`. Migrations belong with the schema they're derived from. CI runs `drizzle-kit migrate --config packages/api/drizzle.config.ts` using `DATABASE_URL` from GitHub secrets.
 
 **Why**: Co-locating schema and migrations in the shared package keeps the data layer cohesive. Both `apps/web/worker` (runtime Drizzle) and CI (migration runner) import from `packages/api`.
+
+### 8. Runtime injection of Supabase config into the client
+
+**Choice**: The Worker intercepts all requests via `run_worker_first: true`. API routes (`/api/*`) go to the tRPC handler. All other requests are fetched via the `ASSETS` binding. If the response is HTML (`Content-Type: text/html`), the Worker injects a `<script>` setting `window.__SUPABASE__ = { url, key }` from `env.SUPABASE_URL` and `env.SUPABASE_PUBLISHABLE_KEY` into `<head>` before returning. Non-HTML responses (JS, CSS, images) pass through unmodified. The client reads `window.__SUPABASE__` instead of `import.meta.env.VITE_SUPABASE_*`.
+
+**Why**: Today the Supabase URL and publishable key are baked into the client bundle at build time via Vite's `import.meta.env`. This couples the build to a specific environment — the prod deploy workflow rebuilds but does not set `VITE_SUPABASE_*`, so the prod client bundle silently talks to the **test** Supabase project. Runtime injection decouples the build from the environment: the same artifact deploys to test and prod, and the Worker supplies the correct per-environment values from its bindings. This also gives a single source of truth (`wrangler.jsonc` vars) for both the Worker (JWT/JWKS verification) and the client (Supabase auth SDK). Using `run_worker_first: true` with a Content-Type check (rather than a path whitelist) ensures injection works for all client-side routes (e.g., `/characters`) via SPA fallback, not just `/` and `/index.html`.
+
+**Alternatives considered**:
+- *Keep build-time injection, set `VITE_SUPABASE_*` in the prod workflow*: Fixes the immediate bug but keeps two sources of truth (`.env` for client, `wrangler.jsonc` for Worker) and requires a rebuild per environment. Reintroduces the same footgun for any future environment.
+- *Client fetches config from a `/api/config` endpoint*: Adds a round-trip before the client can initialize Supabase. The Worker already has the values at request time — injecting them into the HTML avoids the extra request and works on first paint.
+- *Path whitelist (`run_worker_first: ["/", "/index.html"]`)*: Fragile — breaks for client-side routes like `/characters` served via SPA fallback. Duplicates the path list between `wrangler.jsonc` and Worker code. Rejected.
+- *Cloudflare Pages environment variables / `pagesBuildData`*: Pages-specific; we deploy Workers, not Pages.
+
+**Risks / Trade-offs**:
+- HTML is no longer served as a static asset for `/` — the Worker runs on every page load. CPU cost is negligible (string interpolation on a small file). Non-HTML assets still serve statically without invoking the Worker.
+- Local dev (`vite dev`) serves `index.html` via the Vite dev server, not the Worker, so `window.__SUPABASE__` is undefined. **Open question** — how to provide it in local dev. Candidates: a Vite plugin that injects the script from `.dev.vars`/`.env` during dev, or letting the Worker handle `/` even in dev via the Vite plugin's workerd runtime. Deferred to a follow-up change; local dev can use a temporary shim until then.
+- The publishable key is safe in the client by design (it is *publishable*). The win is build portability and single-source-of-truth, not secrecy.
+
+### 9. Wrangler environments for per-environment config (env.prod block)
+
+**Choice**: Use a single `wrangler.jsonc` with both test and prod as named wrangler environments (`env.test`, `env.prod`). The top level contains only shared config (`main`, `compatibility_date`, `compatibility_flags`, `assets`, `observability`) — no environment-specific values. Each environment block specifies its own `name`, `hyperdrive` array, and `vars`. Both deploy workflows set `CLOUDFLARE_ENV` at build time (`CLOUDFLARE_ENV=test` / `CLOUDFLARE_ENV=prod`), and the Vite plugin flattens the selected environment into the output `wrangler.json`. The dev script uses `CLOUDFLARE_ENV=test vite` for local development.
+
+**Why**: Previously, test was the top-level default and prod was an `env.prod` override. This was asymmetric — test was implicit, prod was explicit. Making both environments named provides symmetry and clarity: neither is the "default", both are explicit selections. The top-level contains only truly shared config. Both workflows are identical except for `CLOUDFLARE_ENV` and the `DATABASE_URL` secret. The previous `deploy-prod.yml` used an inline `node -e` script to mutate the built config — now eliminated.
+
+**Alternatives considered**:
+- *Multiple config files* (`wrangler.jsonc` + `wrangler.prod.jsonc`, selected via `CLOUDFLARE_VITE_WRANGLER_CONFIG_PATH`): Works but duplicates all shared fields (main, compat, flags, assets, observability) across two files. Drift risk on every config change. Rejected for DRY.
+- *Programmatic config* (`config` option in `vite.config.ts` reading env vars): Works but Cloudflare's docs say this is "primarily for frameworks and plugin developers" — fights the tool's guidance. Rejected for tooling alignment.
+- *CLI flags* (`--var key:value`, `--name`): `--var` overrides vars at deploy time, but there is no CLI flag for Hyperdrive binding ID. Would require a mix of CLI flags and config file, splitting config across two places. Rejected for fragmentation.
+- *Keep the `node -e` mutation*: Functional but fragile and opaque. Rejected.
+
+**Risks / Trade-offs**:
+- **`name` override**: In standard wrangler, `name` is non-inheritable and must be explicitly set per environment. The `env.prod.name` field must be verified to flatten correctly into the output config. Spike task covers this.
+- **`hyperdrive` override**: The entire `hyperdrive` array is non-inheritable — `env.prod` must specify the full array with the prod Hyperdrive ID, not just the ID. Spike task verifies this flattens correctly.
+- **Secrets**: Secrets are not in the config file at all. They are injected via `wrangler secret put` in the workflow (or the Cloudflare dashboard). The config file only declares non-secret vars and binding IDs.
 
 ## Risks / Trade-offs
 
@@ -107,12 +141,12 @@ The tRPC fetch adapter and `jose` JWT verification are already runtime-agnostic 
 
 ## Migration Plan
 
-1. **Create Cloudflare resources**: Two Pages projects, two Hyperdrive configs (test/prod), dashboard vars/secrets.
+1. **Create Cloudflare resources**: Two Workers, two Hyperdrive configs (test/prod), dashboard vars/secrets.
 2. **Restructure monorepo**: Move `apps/server/src/*` → `apps/web/worker/*`. Move `migrations/` + `drizzle.config.ts` → `packages/api/`. Update `package.json` dependencies across workspaces.
 3. **Rewrite Worker entry**: `apps/web/worker/index.ts` uses `fetchRequestHandler` directly. `db.ts` uses `env.HYPERDRIVE.connect()`. `context.ts` receives `env` binding.
 4. **Configure Vite plugin**: Add `@cloudflare/vite-plugin` to `apps/web/vite.config.ts`. Create `apps/web/wrangler.jsonc` with assets config, Hyperdrive binding, and vars.
 5. **Update local dev**: `.dev.vars` for local secrets. Single `vite dev` command. Verify Hyperdrive local mode connects to test Supabase.
-6. **Update GitHub workflows**: Rewrite `deploy-test.yml` and `deploy-prod.yml` to run migrations (Node.js step) then `wrangler pages deploy`. Add `DATABASE_URL`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` as GitHub secrets.
+6. **Update GitHub workflows**: Rewrite `deploy-test.yml` and `deploy-prod.yml` to run migrations (Node.js step) then `wrangler deploy`. Add `DATABASE_URL`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` as GitHub secrets.
 7. **Delete old infrastructure**: Remove `Dockerfile`, `fly.prod.toml`, `fly.test.toml`, `apps/server/`.
 8. **Decommission Fly apps**: After verifying Cloudflare deploys work, delete Fly apps.
 9. **Update `.env.example`**: Document new local dev variables (`.dev.vars` format, no `DATABASE_URL` at runtime, no `PORT`).
@@ -124,3 +158,4 @@ The tRPC fetch adapter and `jose` JWT verification are already runtime-agnostic 
 - **Hyperdrive local mode**: Does `wrangler dev` proxy Hyperdrive to the remote Supabase, or does it need a local connection string? Need to verify during implementation — `wrangler dev` supports Hyperdrive local mode with `localConnectionString` in `wrangler.jsonc`.
 - **Vite plugin workspace imports**: Does `@cloudflare/vite-plugin` correctly bundle `@dnd-weekend/api` workspace dependency into the Worker? May need `optimizeDeps` or `ssr.noExternal` configuration. Spike during implementation.
 - **Hyperdrive + `postgres-js` compatibility**: Hyperdrive's `.connect()` returns a connection that works with `postgres-js`. Need to confirm Drizzle's `drizzle-orm/postgres-js` accepts it without changes. Expected to work, but verify.
+- **Local dev Supabase config injection**: Resolved — the Vite plugin runs the Worker via workerd in dev mode, so `HTMLRewriter` injects `window.__SUPABASE__` from `env.test.vars` locally. `CLOUDFLARE_ENV=test` is set in `.env` and passed through via `loadEnv` in `vite.config.ts`. No shim needed.
