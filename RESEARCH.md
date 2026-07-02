@@ -20,6 +20,10 @@ Session mode (port 5432) is required for drizzle-kit migrations (not transaction
 
 Verified: `DATABASE_URL=<pooler-url> pnpm --filter @dnd-weekend/api exec tsx src/migrate.ts` → "Migrations applied successfully".
 
+## Confirmation from community
+
+GitHub discussion #20955 ("Github action: supabase link with ipv6 enabled issue") confirms the exact same problem: Supabase switched to IPv6-only direct connections (Jan 2024), GitHub Actions runners have no IPv6. The Supabase CLI (≥1.136.3) auto-routes through Supavisor, but for `drizzle-kit migrate` we must provide the pooler connection string manually. Our solution (pooler session mode, IPv4) is the correct approach.
+
 ## Action items
 
 - [ ] Update GitHub secrets `DATABASE_URL_TEST` and `DATABASE_URL_PROD` to use the pooler connection strings (IPv4)
