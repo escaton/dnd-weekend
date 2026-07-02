@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
-import { Link, useRouterState } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dices, DoorOpen, LogOut, Menu, Users, type LucideIcon } from "lucide-react";
 import { useTRPC } from "../lib/trpc";
 import { supabase } from "../lib/supabase";
@@ -53,12 +53,9 @@ function NavLink({
   );
 }
 
-async function handleSignOut() {
-  await supabase.auth.signOut();
-  window.location.href = "/sign-in";
-}
-
 export function AppShell({ children }: { children: ReactNode }) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isSignInPage = pathname === "/sign-in";
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -72,6 +69,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   const userData = authQuery.data ?? null;
   const displayName = userData?.displayName ?? userData?.email ?? null;
   const avatarUrl = userData?.avatarUrl ?? null;
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    await queryClient.invalidateQueries({ queryKey: trpc.auth.me.queryKey() });
+    navigate({ to: "/sign-in" });
+  }
 
   if (isSignInPage) {
     return (

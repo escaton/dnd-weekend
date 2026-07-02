@@ -40,3 +40,7 @@ console.log(token); // use with curl -H "Authorization: Bearer <token>"
 ```
 
 Local dev credentials and connection strings live in the gitignored `.env` (see `.env.example` for the full list). Never commit secrets.
+
+## Navigation
+
+Use TanStack Router's `useNavigate()` (in components) or the exported `router` instance from `apps/web/src/lib/router.ts` (outside components) for all client-side navigation. Do **not** use `window.location.href` / `window.location.assign` / `window.location.replace` for in-app routing — it forces a full app reload and discards router state.

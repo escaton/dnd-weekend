@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Trash2, UserPlus } from "lucide-react";
 import { useTRPC } from "../lib/trpc";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -38,6 +38,7 @@ function getCharacterName(content: unknown): string {
 
 function RoomDetailPage() {
   const { id } = Route.useParams();
+  const navigate = useNavigate();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
@@ -112,7 +113,7 @@ function RoomDetailPage() {
   const leaveMutation = useMutation(
     trpc.room.leave.mutationOptions({
       onSuccess: () => {
-        window.location.href = "/rooms";
+        navigate({ to: "/rooms" });
       },
     }),
   );
@@ -120,7 +121,7 @@ function RoomDetailPage() {
   const deleteMutation = useMutation(
     trpc.room.delete.mutationOptions({
       onSuccess: () => {
-        window.location.href = "/rooms";
+        navigate({ to: "/rooms" });
       },
     }),
   );
