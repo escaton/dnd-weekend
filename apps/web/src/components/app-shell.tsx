@@ -172,9 +172,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Sheet>
       </header>
 
-      <main className="flex-1 p-4 md:p-8">
-        <div className="mx-auto max-w-2xl">{children}</div>
-      </main>
+      <main className="flex-1 min-h-0">{children}</main>
 
       <Toaster />
     </div>
