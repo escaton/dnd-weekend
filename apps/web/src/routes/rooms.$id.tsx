@@ -82,7 +82,7 @@ function RoomDetailPage() {
   const currentUserId = authQuery.data?.id;
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col md:flex-row">
+    <div className="flex h-[calc(100dvh-4rem)] flex-col md:flex-row">
       <div className="md:hidden">
         <SegmentedControl value={segment} onChange={setSegment} />
       </div>

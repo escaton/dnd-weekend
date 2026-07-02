@@ -3,17 +3,14 @@ import { Play, Plus } from "lucide-react";
 import { Button } from "../ui/button";
 
 import "tldraw/tldraw.css";
-import type { Editor } from "tldraw";
+import type { Editor, TLEventInfo } from "tldraw";
 
-// Lazy-load the heavy Tldraw component so the room route's initial bundle
-// stays lean. Suspense fallback is rendered while the editor chunk loads.
 const Tldraw = lazy(async () => {
   const mod = await import("tldraw");
   return { default: mod.Tldraw };
 });
 
 function createRedBoxAt(editor: Editor, x: number, y: number) {
-  // Center the 100x100 box on the given page point.
   editor.createShape({
     type: "geo",
     x: x - 50,
@@ -35,6 +32,20 @@ function Canvas() {
     editorRef.current = editor;
     editor.setColorMode("dark");
     editor.selectNone();
+
+    function onBeforeEvent(info: TLEventInfo) {
+      if (info.type !== "pointer") return;
+
+      if (info.name === "pointer_down" && info.target === "canvas") {
+        // Set isPanning so the Editor pans on drag instead of the select
+        // tool entering its brushing (rectangle selection) state.
+        // On pointer_up the Editor resets isPanning automatically.
+        (editor.inputs as unknown as { setIsPanning: (v: boolean) => void }).setIsPanning(true);
+      }
+    }
+
+    editor.on("before-event", onBeforeEvent);
+    return () => editor.off("before-event", onBeforeEvent);
   }
 
   function handleAddBox() {
@@ -57,6 +68,7 @@ function Canvas() {
       <Tldraw
         hideUi
         licenseKey="tldraw-2026-07-16/WyJpaW9lZWZHVSIsWyIqIl0sMTYsIjIwMjYtMDctMTYiXQ.1z2JwNzZMLb75+MxUPZWWzGPTf3oned2ZSIwF//0XzwHQROHIoXrGDKVUDwGI7Zie6AsMQqiagrwJA8LUZp3cg"
+        options={{ createTextOnCanvasDoubleClick: false }}
         components={{
           ContextMenu: null,
           ActionsMenu: null,
