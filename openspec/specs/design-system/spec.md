@@ -49,7 +49,7 @@ The web client SHALL use Lucide React (`lucide-react`) as its icon library. Icon
 
 ### Requirement: Mobile-first responsive layout
 
-The web client SHALL be usable on viewports as narrow as 320px. The app SHALL provide a responsive AppShell that adapts between desktop and mobile layouts. On desktop (≥768px), navigation SHALL be a persistent sidebar. On mobile (<768px), navigation SHALL be accessible via a collapsible drawer or bottom navigation bar. All interactive elements SHALL have a minimum touch target of 44px. Dialogs SHALL be full-screen on mobile and centered modals on desktop. Content SHALL stack to a single column on mobile and may expand to multi-column on larger viewports.
+The web client SHALL be usable on viewports as narrow as 320px. The app SHALL provide a responsive AppShell that adapts between desktop and mobile layouts. Both layouts SHALL render a shared top header bar containing the brand/logo on the left. On desktop (≥768px), the header SHALL show a user dropdown trigger on the right; the dropdown SHALL expose navigation links (e.g. Characters, Rooms) and a Sign out action. On mobile (<768px), the header SHALL show a navigation toggle on the right that opens a collapsible drawer containing the navigation links, the current user, and a Sign out action. All interactive elements SHALL have a minimum touch target of 44px. Dialogs SHALL be full-screen on mobile and centered modals on desktop. Content SHALL stack to a single column on mobile and may expand to multi-column on larger viewports.
 
 #### Scenario: User opens the app on a mobile device
 - **WHEN** a user opens the app on a viewport narrower than 768px
@@ -60,9 +60,10 @@ The web client SHALL be usable on viewports as narrow as 320px. The app SHALL pr
 
 #### Scenario: User opens the app on a desktop
 - **WHEN** a user opens the app on a viewport 768px or wider
-- **THEN** the layout SHALL display a persistent sidebar with navigation links
+- **THEN** the layout SHALL display a persistent header bar with the brand/logo on the left
+- **AND** the header SHALL display a user dropdown trigger on the right
+- **AND** the user dropdown SHALL contain navigation links and a Sign out action
 - **AND** the main content SHALL be centered with a maximum width
-- **AND** the sidebar SHALL remain visible without a toggle
 
 #### Scenario: Dialog opens on mobile vs desktop
 - **WHEN** a dialog opens on a viewport narrower than 768px

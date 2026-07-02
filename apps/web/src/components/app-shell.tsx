@@ -89,105 +89,92 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isActive = (to: string) => pathname === to || pathname.startsWith(`${to}/`);
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="hidden md:flex md:w-60 md:flex-col md:shrink-0 border-r border-border bg-card">
-        <div className="flex items-center gap-2 px-6 h-16 border-b border-border">
+    <div className="flex min-h-screen flex-col">
+      <header className="flex items-center justify-between h-16 px-4 border-b border-border bg-card">
+        <div className="flex items-center gap-2">
           <Dices className="h-6 w-6 text-primary" />
           <span className="font-semibold text-foreground">DnD Weekend</span>
         </div>
-        <div className="flex-1 p-4">
-          <nav className="flex flex-col gap-1">
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="hidden md:flex gap-2 min-h-[44px]">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={avatarUrl ?? undefined} alt={displayName ?? "User"} />
+                <AvatarFallback>{initials}</AvatarFallback>
+              </Avatar>
+              <span className="max-w-[140px] truncate text-sm">{displayName ?? "User"}</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel className="truncate">{displayName}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
             {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                label={item.label}
-                icon={item.icon}
-                active={isActive(item.to)}
-              />
+              <DropdownMenuItem key={item.to} asChild>
+                <Link to={item.to}>
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              </DropdownMenuItem>
             ))}
-          </nav>
-        </div>
-        <div className="p-4 border-t border-border">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="w-full justify-start gap-2 min-h-[44px]">
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+              <LogOut className="h-4 w-4" />
+              Sign out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="md:hidden min-h-[44px] min-w-[44px]">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-72 p-0">
+            <SheetTitle className="sr-only">Navigation</SheetTitle>
+            <div className="flex items-center gap-2 px-4 h-16 border-b border-border">
+              <Dices className="h-6 w-6 text-primary" />
+              <span className="font-semibold text-foreground">DnD Weekend</span>
+            </div>
+            <div className="p-4">
+              <nav className="flex flex-col gap-1">
+                {navItems.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    label={item.label}
+                    icon={item.icon}
+                    active={isActive(item.to)}
+                    onClick={() => setMobileOpen(false)}
+                  />
+                ))}
+              </nav>
+            </div>
+            <div className="mt-auto p-4 border-t border-border">
+              <div className="flex items-center gap-2 px-3 py-2">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={avatarUrl ?? undefined} alt={displayName ?? "User"} />
                   <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
                 <span className="truncate text-sm">{displayName ?? "User"}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
-              <DropdownMenuLabel className="truncate">{displayName}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleSignOut} className="min-h-[44px] text-destructive">
+              </div>
+              <Button
+                variant="ghost"
+                onClick={handleSignOut}
+                className="w-full justify-start gap-2 min-h-[44px] mt-1 text-destructive"
+              >
                 <LogOut className="h-4 w-4" />
                 Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </aside>
-
-      <div className="flex flex-col flex-1 min-w-0">
-        <header className="flex items-center justify-between h-16 px-4 border-b border-border bg-card md:hidden">
-          <div className="flex items-center gap-2">
-            <Dices className="h-6 w-6 text-primary" />
-            <span className="font-semibold text-foreground">DnD Weekend</span>
-          </div>
-          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="min-h-[44px] min-w-[44px]">
-                <Menu className="h-5 w-5" />
               </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-72 p-0">
-              <SheetTitle className="sr-only">Navigation</SheetTitle>
-              <div className="flex items-center gap-2 px-4 h-16 border-b border-border">
-                <Dices className="h-6 w-6 text-primary" />
-                <span className="font-semibold text-foreground">DnD Weekend</span>
-              </div>
-              <div className="p-4">
-                <nav className="flex flex-col gap-1">
-                  {navItems.map((item) => (
-                    <NavLink
-                      key={item.to}
-                      to={item.to}
-                      label={item.label}
-                      icon={item.icon}
-                      active={isActive(item.to)}
-                      onClick={() => setMobileOpen(false)}
-                    />
-                  ))}
-                </nav>
-              </div>
-              <div className="mt-auto p-4 border-t border-border">
-                <div className="flex items-center gap-2 px-3 py-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={avatarUrl ?? undefined} alt={displayName ?? "User"} />
-                    <AvatarFallback>{initials}</AvatarFallback>
-                  </Avatar>
-                  <span className="truncate text-sm">{displayName ?? "User"}</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  onClick={handleSignOut}
-                  className="w-full justify-start gap-2 min-h-[44px] mt-1 text-destructive"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Sign out
-                </Button>
-              </div>
-            </SheetContent>
-          </Sheet>
-        </header>
+            </div>
+          </SheetContent>
+        </Sheet>
+      </header>
 
-        <main className="flex-1 p-4 md:p-8">
-          <div className="mx-auto max-w-2xl">{children}</div>
-        </main>
-      </div>
+      <main className="flex-1 p-4 md:p-8">
+        <div className="mx-auto max-w-2xl">{children}</div>
+      </main>
 
       <Toaster />
     </div>

@@ -18,7 +18,7 @@ export const Route = createFileRoute("/sign-in")({
       data: { session },
     } = await supabase.auth.getSession();
     if (session) {
-      throw redirect({ to: "/characters" });
+      throw redirect({ to: "/rooms" });
     }
   },
   component: SignInPage,
@@ -28,7 +28,7 @@ async function handleSignIn() {
   await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${window.location.origin}/characters`,
+      redirectTo: `${window.location.origin}/rooms`,
     },
   });
 }
@@ -41,7 +41,7 @@ function SignInPage() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        navigate({ to: "/characters" });
+        navigate({ to: "/rooms" });
       }
     });
     return () => subscription.unsubscribe();

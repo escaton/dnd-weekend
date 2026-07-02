@@ -7,7 +7,7 @@ export async function debugLogin(email: string, password: string) {
     password,
   });
   if (error) throw error;
-  router.navigate({ to: "/characters" });
+  router.navigate({ to: "/rooms" });
   return data.session?.access_token;
 }
 
