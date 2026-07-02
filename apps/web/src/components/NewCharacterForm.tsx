@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { Plus } from "lucide-react";
 import { useTRPC } from "../lib/trpc";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import styles from "../styles/new-character-form.module.css";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
+import { toast } from "./ui/sonner";
 
 export default function NewCharacterForm() {
   const [name, setName] = useState("");
@@ -11,8 +14,14 @@ export default function NewCharacterForm() {
   const createMutation = useMutation(
     trpc.character.create.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: trpc.character.list.queryKey() });
+        queryClient.invalidateQueries({
+          queryKey: trpc.character.list.queryKey(),
+        });
         setName("");
+        toast.success("Character created");
+      },
+      onError: (error) => {
+        toast.error(error.message);
       },
     }),
   );
@@ -23,19 +32,18 @@ export default function NewCharacterForm() {
   }
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit}>
-      <input
-        className={styles.input}
+    <form className="flex gap-2" onSubmit={handleSubmit}>
+      <Input
         type="text"
         placeholder="Character name (optional)"
         value={name}
         onChange={(e) => setName(e.target.value)}
         disabled={createMutation.isPending}
       />
-      <button className={styles.button} type="submit" disabled={createMutation.isPending}>
-        Add character
-      </button>
-      {createMutation.error && <p className={styles.error}>{createMutation.error.message}</p>}
+      <Button type="submit" disabled={createMutation.isPending}>
+        <Plus className="h-4 w-4" />
+        Add
+      </Button>
     </form>
   );
 }

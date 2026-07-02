@@ -157,6 +157,21 @@ The Worker SHALL connect to Supabase Postgres via a Hyperdrive binding (`env.HYP
 - **AND** it SHALL NOT use Hyperdrive
 - **AND** `DATABASE_URL` SHALL be provided as a GitHub secret scoped to the deploy environment
 
+### Requirement: Migration naming convention
+
+Migrations SHALL be generated using `drizzle-kit generate --name <descriptive-name>` so that migration files have meaningful, descriptive names (e.g., `0002_add_display_name`) rather than random auto-generated names. The migration name SHALL describe the schema change it introduces. The `meta/_journal.json` file SHALL reference the descriptive name in its `tag` field, matching the migration filename.
+
+#### Scenario: Developer creates a new migration
+- **WHEN** a developer runs the migration generate command after changing the schema
+- **THEN** the developer SHALL pass `--name <descriptive-name>` to `drizzle-kit generate`
+- **AND** the generated SQL file SHALL be named with the descriptive name (e.g., `0002_add_display_name.sql`)
+- **AND** the `meta/_journal.json` `tag` field SHALL match the migration filename
+
+#### Scenario: Migration with no --name flag
+- **WHEN** a developer runs `drizzle-kit generate` without `--name`
+- **THEN** drizzle-kit SHALL generate a random name
+- **AND** the developer SHALL rename the file and update `meta/_journal.json` before committing
+
 ### Requirement: Rollback via Cloudflare
 
 The system SHALL support rollback via Cloudflare Workers versions rollback. A rollback reverts the Worker to a previous version. Rollback SHALL be performed via `wrangler rollback` or the Cloudflare dashboard. No image registry or manual SHA tagging is required.
