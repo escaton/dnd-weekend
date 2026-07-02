@@ -23,6 +23,8 @@ Use the existing debug user — do **not** create temporary users in Supabase Au
 - Password: `111111`
 - These credentials are documented openly in `openspec/specs/user-auth/spec.md`
 
+If you need anything from the Supabase dashboard (connection strings, API keys, pooler config, enabling features, etc.), **do not attempt to do it yourself**. Ask the user and guide them on exactly what to do and where to find it.
+
 ### App testing
 
 For end-to-end testing, use the `agent-browser` skill. The app exposes a hidden login method — call `window.__debugLogin("debug@dnd-weekend.local", "111111")` from the browser console to sign in via Supabase email/password auth and navigate to `/characters`. This avoids clicking through the Google OAuth flow.
