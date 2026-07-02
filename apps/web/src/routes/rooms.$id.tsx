@@ -42,7 +42,7 @@ function RoomDetailPage() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
-  const roomQuery = useQuery(trpc.room.get.queryOptions({ id }));
+  const roomQuery = useQuery(trpc.room.get.queryOptions({ id }, { retry: false }));
   const characterListQuery = useQuery(trpc.character.list.queryOptions());
   const authQuery = useQuery(trpc.auth.me.queryOptions());
 
@@ -146,6 +146,20 @@ function RoomDetailPage() {
   if (roomQuery.isError) {
     return (
       <div className="space-y-4">
+        <h1 className="text-2xl font-bold">Access denied</h1>
+        <p className="text-muted-foreground">You don't have access to this room.</p>
+        <Link to="/rooms" className="text-primary text-sm hover:underline">
+          Back to rooms
+        </Link>
+      </div>
+    );
+  }
+
+  const room = roomQuery.data;
+
+  if (room.viewerStatus === "pending") {
+    return (
+      <div className="space-y-4">
         <h1 className="text-2xl font-bold">Join room</h1>
         <p className="text-muted-foreground">Pick a character to join (optional):</p>
         {characterListQuery.data && characterListQuery.data.length > 0 ? (
@@ -185,7 +199,6 @@ function RoomDetailPage() {
     );
   }
 
-  const room = roomQuery.data;
   const members = room.members ?? [];
   const currentUserId = authQuery.data?.id;
   const isCurrentUserGM = room.gameMasterId === currentUserId;

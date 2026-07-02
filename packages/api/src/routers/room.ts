@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { characters, rooms, roomMembers, authUsers } from "../db/schema.js";
 import { protectedProcedure, router } from "../trpc.js";
@@ -21,6 +21,27 @@ async function requireActiveMember(roomId: string, userId: string, db: DB) {
     throw new TRPCError({ code: "FORBIDDEN" });
   }
   return member;
+}
+
+async function findMembership(roomId: string, userId: string, email: string, db: DB) {
+  const rows = await db
+    .select({
+      id: roomMembers.id,
+      userId: roomMembers.userId,
+      email: roomMembers.email,
+      status: roomMembers.status,
+    })
+    .from(roomMembers)
+    .where(
+      and(
+        eq(roomMembers.roomId, roomId),
+        or(eq(roomMembers.userId, userId), eq(roomMembers.email, email)),
+        isNull(roomMembers.deletedAt),
+      ),
+    );
+  return (
+    rows.find((r) => r.status === "active") ?? rows.find((r) => r.status === "pending") ?? null
+  );
 }
 
 async function requireGM(roomId: string, userId: string, db: DB) {
@@ -98,7 +119,11 @@ export const roomRouter = router({
   get: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      await requireActiveMember(input.id, ctx.user.id, ctx.db);
+      const membership = await findMembership(input.id, ctx.user.id, ctx.user.email, ctx.db);
+
+      if (!membership) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
 
       const [room] = await ctx.db
         .select()
@@ -107,6 +132,14 @@ export const roomRouter = router({
 
       if (!room) {
         throw new TRPCError({ code: "NOT_FOUND" });
+      }
+
+      if (membership.status === "pending") {
+        return {
+          viewerStatus: "pending" as const,
+          id: room.id,
+          title: room.title,
+        };
       }
 
       const members = await ctx.db
@@ -130,7 +163,7 @@ export const roomRouter = router({
         .leftJoin(authUsers, eq(authUsers.id, roomMembers.userId))
         .where(and(eq(roomMembers.roomId, input.id), isNull(roomMembers.deletedAt)));
 
-      return { ...room, members };
+      return { viewerStatus: "active" as const, ...room, members };
     }),
 
   invite: protectedProcedure
