@@ -89,7 +89,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isActive = (to: string) => pathname === to || pathname.startsWith(`${to}/`);
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="grid min-h-[100svh] grid-rows-[4rem_1fr]">
       <header className="flex items-center justify-between h-16 px-4 border-b border-border bg-card">
         <div className="flex items-center gap-2">
           <Dices className="h-6 w-6 text-primary" />
@@ -172,7 +172,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Sheet>
       </header>
 
-      <main className="flex-1 min-h-0">{children}</main>
+      <main className="min-h-0 overflow-hidden">{children}</main>
 
       <Toaster />
     </div>
