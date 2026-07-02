@@ -8,80 +8,80 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from "./routes/__root";
-import { Route as SignInRouteImport } from "./routes/sign-in";
-import { Route as CharactersRouteImport } from "./routes/characters";
-import { Route as IndexRouteImport } from "./routes/index";
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as CharactersRouteImport } from './routes/characters'
+import { Route as IndexRouteImport } from './routes/index'
 
 const SignInRoute = SignInRouteImport.update({
-  id: "/sign-in",
-  path: "/sign-in",
+  id: '/sign-in',
+  path: '/sign-in',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const CharactersRoute = CharactersRouteImport.update({
-  id: "/characters",
-  path: "/characters",
+  id: '/characters',
+  path: '/characters',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const IndexRoute = IndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 
 export interface FileRoutesByFullPath {
-  "/": typeof IndexRoute;
-  "/characters": typeof CharactersRoute;
-  "/sign-in": typeof SignInRoute;
+  '/': typeof IndexRoute
+  '/characters': typeof CharactersRoute
+  '/sign-in': typeof SignInRoute
 }
 export interface FileRoutesByTo {
-  "/": typeof IndexRoute;
-  "/characters": typeof CharactersRoute;
-  "/sign-in": typeof SignInRoute;
+  '/': typeof IndexRoute
+  '/characters': typeof CharactersRoute
+  '/sign-in': typeof SignInRoute
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport;
-  "/": typeof IndexRoute;
-  "/characters": typeof CharactersRoute;
-  "/sign-in": typeof SignInRoute;
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/characters': typeof CharactersRoute
+  '/sign-in': typeof SignInRoute
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: "/" | "/characters" | "/sign-in";
-  fileRoutesByTo: FileRoutesByTo;
-  to: "/" | "/characters" | "/sign-in";
-  id: "__root__" | "/" | "/characters" | "/sign-in";
-  fileRoutesById: FileRoutesById;
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths: '/' | '/characters' | '/sign-in'
+  fileRoutesByTo: FileRoutesByTo
+  to: '/' | '/characters' | '/sign-in'
+  id: '__root__' | '/' | '/characters' | '/sign-in'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute;
-  CharactersRoute: typeof CharactersRoute;
-  SignInRoute: typeof SignInRoute;
+  IndexRoute: typeof IndexRoute
+  CharactersRoute: typeof CharactersRoute
+  SignInRoute: typeof SignInRoute
 }
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/sign-in": {
-      id: "/sign-in";
-      path: "/sign-in";
-      fullPath: "/sign-in";
-      preLoaderRoute: typeof SignInRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/characters": {
-      id: "/characters";
-      path: "/characters";
-      fullPath: "/characters";
-      preLoaderRoute: typeof CharactersRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/": {
-      id: "/";
-      path: "/";
-      fullPath: "/";
-      preLoaderRoute: typeof IndexRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/characters': {
+      id: '/characters'
+      path: '/characters'
+      fullPath: '/characters'
+      preLoaderRoute: typeof CharactersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,7 +89,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CharactersRoute: CharactersRoute,
   SignInRoute: SignInRoute,
-};
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()

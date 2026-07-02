@@ -13,12 +13,23 @@
       "default": "./src/db/schema.ts"
     }
   },
+  "scripts": {
+    "db:generate": "drizzle-kit generate --config drizzle.config.ts",
+    "db:migrate": "tsx --env-file=../../.env src/migrate.ts",
+    "db:push": "drizzle-kit push --config drizzle.config.ts",
+    "db:studio": "drizzle-kit studio --config drizzle.config.ts",
+    "typecheck": "tsc --noEmit"
+  },
   "dependencies": {
     "@trpc/server": "^11.18.0",
     "drizzle-orm": "^0.45.2",
+    "postgres": "^3.4.9",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/node": "^26.0.1",
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.22.4",
     "typescript": "^7.0.1-rc"
   }
 }

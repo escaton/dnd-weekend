@@ -16,8 +16,40 @@ jobs:
         with:
           ref: ${{ inputs.commit_sha || github.ref }}
 
-      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - uses: pnpm/action-setup@v4
 
-      - run: flyctl deploy --config fly.prod.toml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Run database migrations
+        run: pnpm --filter @dnd-weekend/api db:migrate
         env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_PROD }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+
+      - name: Build
+        run: pnpm --filter @dnd-weekend/web build
+
+      - name: Configure prod deployment
+        run: |
+          node -e "
+            const fs = require('fs');
+            const configPath = 'apps/web/dist/dnd_weekend_test/wrangler.json';
+            const config = JSON.parse(fs.readFileSync(configPath));
+            config.name = 'dnd-weekend';
+            config.hyperdrive[0].id = '9971f47dd14e4ac8b2c1d1171bd9ff33';
+            config.vars = {
+              SUPABASE_URL: 'https://spkpguayatzjdpoodmwd.supabase.co',
+              SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_7LQE7f82V9_87NkU9kXqWw_Jy7F6xQJ'
+            };
+            fs.writeFileSync(configPath, JSON.stringify(config));
+          "
+
+      - name: Deploy to Cloudflare
+        run: npx wrangler deploy --config apps/web/dist/dnd_weekend_test/wrangler.json
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
