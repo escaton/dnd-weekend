@@ -67,16 +67,16 @@
 ## 8. Verify Build and Deploy
 
 - [x] 8.1 Run `pnpm --filter @dnd-weekend/web build` — verify static assets and Worker bundle are produced
-- [ ] 8.2 Trigger deploy-test workflow — verify migrations run, then `wrangler deploy` succeeds, site is live
-- [ ] 8.3 Verify test deployment: sign in with debug user, create/list/soft-delete a character
-- [ ] 8.4 Trigger deploy-prod workflow — verify migrations run, then deploy succeeds, site is live
-- [ ] 8.5 Verify prod deployment: sign in with debug user, create/list/soft-delete a character
-- [ ] 8.6 Verify rollback: run `wrangler rollback` and confirm previous deployment is served
+- [x] 8.2 Trigger deploy-test workflow — verify migrations run, then `wrangler deploy` succeeds, site is live
+- [x] 8.3 Verify test deployment: sign in with debug user, create/list/soft-delete a character
+- [x] 8.4 Trigger deploy-prod workflow — verify migrations run, then deploy succeeds, site is live
+- [x] 8.5 Verify prod deployment: sign in with debug user, create/list/soft-delete a character
+- [x] 8.6 Verify rollback: run `wrangler rollback` and confirm previous deployment is served
 
 ## 9. Decommission Old Infrastructure
 
-- [ ] 9.1 Verify Cloudflare deployments are stable and serving traffic correctly
-- [ ] 9.2 Delete Fly.io app `dnd-weekend-test`
-- [ ] 9.3 Delete Fly.io app `dnd-weekend-prod`
-- [ ] 9.4 Remove `FLY_API_TOKEN` from GitHub secrets (no longer needed)
+- [x] 9.1 Verify Cloudflare deployments are stable and serving traffic correctly
+- [x] 9.2 Delete Fly.io app `dnd-weekend-test`
+- [x] 9.3 Delete Fly.io app `dnd-weekend-prod`
+- [x] 9.4 Remove `FLY_API_TOKEN` from GitHub secrets (no longer needed)
 - [x] 9.5 Update root `package.json` scripts if `dev` script references `apps/server` (should now be `pnpm --filter @dnd-weekend/web dev`)
