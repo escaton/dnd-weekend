@@ -16,12 +16,11 @@ jobs:
         with:
           ref: ${{ inputs.commit_sha || github.ref }}
 
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
+      - uses: pnpm/setup@v1
         with:
-          node-version: 24
-          cache: pnpm
+          runtime: node@24
+          cache: true
+          install: false
 
       - run: pnpm install --frozen-lockfile --ignore-scripts
 
@@ -34,6 +33,6 @@ jobs:
         run: CLOUDFLARE_ENV=prod pnpm --filter @dnd-weekend/web build
 
       - name: Deploy to Cloudflare
-        run: npx wrangler deploy --config apps/web/dist/dnd_weekend/wrangler.json --name dnd-weekend
+        run: pnpm --filter @dnd-weekend/web exec wrangler deploy --config dist/dnd_weekend/wrangler.json --name dnd-weekend
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
