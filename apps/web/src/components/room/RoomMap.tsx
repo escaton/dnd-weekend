@@ -34,14 +34,21 @@ function Canvas() {
     editor.selectNone();
 
     function onBeforeEvent(info: TLEventInfo) {
-      if (info.type !== "pointer") return;
+      if (info.type !== "pointer" || info.name !== "pointer_down") return;
 
-      if (info.name === "pointer_down" && info.target === "canvas") {
-        // Set isPanning so the Editor pans on drag instead of the select
-        // tool entering its brushing (rectangle selection) state.
-        // On pointer_up the Editor resets isPanning automatically.
-        (editor.inputs as unknown as { setIsPanning: (v: boolean) => void }).setIsPanning(true);
-      }
+      // Only pan on truly empty canvas — not over a shape or selection bounds.
+      // The tool's Idle state re-classifies "canvas" hits as "shape" after
+      // before-event fires, so we must hit-test ourselves here.
+      const pagePoint = editor.screenToPage(info.point);
+      const hitShape = editor.getShapeAtPoint(pagePoint, {
+        margin: editor.options.hitTestMargin / editor.getZoomLevel(),
+      });
+      if (hitShape) return;
+
+      const selectionBounds = editor.getSelectionRotatedPageBounds();
+      if (selectionBounds?.containsPoint(pagePoint)) return;
+
+      (editor.inputs as unknown as { setIsPanning: (v: boolean) => void }).setIsPanning(true);
     }
 
     editor.on("before-event", onBeforeEvent);
