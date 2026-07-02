@@ -113,6 +113,9 @@ function RoomDetailPage() {
   const leaveMutation = useMutation(
     trpc.room.leave.mutationOptions({
       onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: trpc.room.list.queryKey(),
+        });
         navigate({ to: "/rooms" });
       },
     }),
@@ -121,6 +124,9 @@ function RoomDetailPage() {
   const deleteMutation = useMutation(
     trpc.room.delete.mutationOptions({
       onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: trpc.room.list.queryKey(),
+        });
         navigate({ to: "/rooms" });
       },
     }),
