@@ -51,7 +51,7 @@ function Canvas() {
     >
       <Tldraw
         hideUi
-        licenseKey={import.meta.env.VITE_TLDRAW_LICENSE_KEY}
+        licenseKey="tldraw-2026-07-16/WyJpaW9lZWZHVSIsWyIqIl0sMTYsIjIwMjYtMDctMTYiXQ.1z2JwNzZMLb75+MxUPZWWzGPTf3oned2ZSIwF//0XzwHQROHIoXrGDKVUDwGI7Zie6AsMQqiagrwJA8LUZp3cg"
         components={{
           ContextMenu: null,
           ActionsMenu: null,
