@@ -47,7 +47,12 @@ function Canvas() {
   return (
     <div
       className="relative h-full w-full"
-      style={{ "--tl-color-background": "hsl(20 14% 4%)" } as React.CSSProperties}
+      style={
+        {
+          "--tl-color-background": "hsl(20 14% 4%)",
+          touchAction: "none",
+        } as React.CSSProperties
+      }
     >
       <Tldraw
         hideUi
