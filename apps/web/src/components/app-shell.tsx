@@ -53,6 +53,11 @@ function NavLink({
   );
 }
 
+async function handleSignOut() {
+  await supabase.auth.signOut();
+  window.location.href = "/sign-in";
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isSignInPage = pathname === "/sign-in";
@@ -67,11 +72,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const userData = authQuery.data ?? null;
   const displayName = userData?.displayName ?? userData?.email ?? null;
   const avatarUrl = userData?.avatarUrl ?? null;
-
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-    window.location.href = "/sign-in";
-  }
 
   if (isSignInPage) {
     return (

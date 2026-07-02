@@ -24,6 +24,15 @@ export const Route = createFileRoute("/sign-in")({
   component: SignInPage,
 });
 
+async function handleSignIn() {
+  await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${window.location.origin}/characters`,
+    },
+  });
+}
+
 function SignInPage() {
   const navigate = useNavigate();
 
@@ -37,15 +46,6 @@ function SignInPage() {
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
-
-  async function handleSignIn() {
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/characters`,
-      },
-    });
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
