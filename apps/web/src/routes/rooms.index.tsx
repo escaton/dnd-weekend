@@ -42,50 +42,52 @@ function RoomsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Rooms</h1>
+    <div className="mx-auto max-w-2xl p-4 md:p-8">
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">Rooms</h1>
 
-      <form className="flex gap-2" onSubmit={handleSubmit}>
-        <Input
-          type="text"
-          placeholder="Room title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          disabled={createMutation.isPending}
-        />
-        <Button type="submit" disabled={createMutation.isPending || !title.trim()}>
-          <Plus className="h-4 w-4" />
-          Create
-        </Button>
-      </form>
+        <form className="flex gap-2" onSubmit={handleSubmit}>
+          <Input
+            type="text"
+            placeholder="Room title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            disabled={createMutation.isPending}
+          />
+          <Button type="submit" disabled={createMutation.isPending || !title.trim()}>
+            <Plus className="h-4 w-4" />
+            Create
+          </Button>
+        </form>
 
-      {listQuery.isPending && <p className="text-muted-foreground">Loading...</p>}
-      {listQuery.isError && <p className="text-muted-foreground">Error loading rooms</p>}
-      {listQuery.data && listQuery.data.length === 0 && (
-        <p className="text-muted-foreground">No rooms yet. Create one above.</p>
-      )}
-      {listQuery.data && listQuery.data.length > 0 && (
-        <div className="flex flex-col gap-2">
-          {listQuery.data.map((room) => (
-            <Link key={room.id} to="/rooms/$id" params={{ id: room.id }} className="block">
-              <Card className="flex items-center justify-between p-4 transition-colors hover:bg-accent">
-                <div className="flex flex-col gap-1">
-                  <span className="font-semibold">{room.title}</span>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Badge variant={room.role === "game-master" ? "default" : "secondary"}>
-                      {room.role === "game-master" ? "GM" : "Player"}
-                    </Badge>
-                    <span className="flex items-center gap-1">
-                      <Users className="h-3.5 w-3.5" />
-                      {room.memberCount}
-                    </span>
+        {listQuery.isPending && <p className="text-muted-foreground">Loading...</p>}
+        {listQuery.isError && <p className="text-muted-foreground">Error loading rooms</p>}
+        {listQuery.data && listQuery.data.length === 0 && (
+          <p className="text-muted-foreground">No rooms yet. Create one above.</p>
+        )}
+        {listQuery.data && listQuery.data.length > 0 && (
+          <div className="flex flex-col gap-2">
+            {listQuery.data.map((room) => (
+              <Link key={room.id} to="/rooms/$id" params={{ id: room.id }} className="block">
+                <Card className="flex items-center justify-between p-4 transition-colors hover:bg-accent">
+                  <div className="flex flex-col gap-1">
+                    <span className="font-semibold">{room.title}</span>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Badge variant={room.role === "game-master" ? "default" : "secondary"}>
+                        {room.role === "game-master" ? "GM" : "Player"}
+                      </Badge>
+                      <span className="flex items-center gap-1">
+                        <Users className="h-3.5 w-3.5" />
+                        {room.memberCount}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

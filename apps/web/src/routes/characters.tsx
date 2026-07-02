@@ -18,10 +18,12 @@ export const Route = createFileRoute("/characters")({
 
 function CharactersPage() {
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Characters</h1>
-      <NewCharacterForm />
-      <CharacterList />
+    <div className="mx-auto max-w-2xl p-4 md:p-8">
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">Characters</h1>
+        <NewCharacterForm />
+        <CharacterList />
+      </div>
     </div>
   );
 }
