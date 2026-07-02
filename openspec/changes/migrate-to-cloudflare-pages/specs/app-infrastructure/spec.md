@@ -13,16 +13,17 @@ The project SHALL be a pnpm monorepo with workspaces. It SHALL contain `apps/web
 
 ### Requirement: Test environment deploys via manual dispatch
 
-The project SHALL have a deploy-test GitHub Actions workflow that triggers via manual `workflow_dispatch`. The workflow SHALL build the app and run `wrangler pages deploy` to deploy to the test Cloudflare Pages project (`dnd-weekend-test`). Database migrations SHALL be run manually by the developer before triggering the deploy workflow (using `pnpm --filter @dnd-weekend/api db:migrate` with a local `DATABASE_URL`).
+The project SHALL have a deploy-test GitHub Actions workflow that triggers via manual `workflow_dispatch`. The workflow SHALL first run database migrations against the test Supabase Postgres using `drizzle-kit migrate` (Node.js + `postgres-js` over the Supavisor session pooler, which provides IPv4 connectivity). If migrations fail, the workflow SHALL exit and the deploy SHALL NOT proceed. If migrations succeed, the workflow SHALL run `wrangler deploy` to deploy to the test Cloudflare Pages project (`dnd-weekend-test`). The `DATABASE_URL` GitHub secret SHALL contain the Supavisor session pooler connection string (IPv4), not the direct connection string (IPv6-only).
 
-#### Scenario: Manual test deploy
-- **WHEN** a user manually triggers the deploy-test workflow (after running migrations locally)
-- **THEN** the workflow SHALL build the app
-- **AND** the workflow SHALL run `wrangler pages deploy` to deploy to the dnd-weekend-test Pages project
+#### Scenario: Manual test deploy with migration gate
+- **WHEN** a user manually triggers the deploy-test workflow
+- **THEN** the workflow SHALL run `drizzle-kit migrate` against the test Supabase database using `DATABASE_URL` from GitHub secrets (Supavisor session pooler, IPv4)
+- **AND** if migrations fail, the workflow SHALL exit without deploying
+- **AND** if migrations succeed, the workflow SHALL run `wrangler deploy` to deploy to the dnd-weekend-test Pages project
 
 ### Requirement: Production environment deploys via manual dispatch
 
-The project SHALL have a deploy-prod GitHub Actions workflow that triggers via manual `workflow_dispatch` with an optional commit SHA input. The workflow SHALL check out the specified commit (or latest main), build the app, and run `wrangler pages deploy` to deploy to the prod Cloudflare Pages project (`dnd-weekend`). Database migrations SHALL be run manually by the developer before triggering the deploy workflow.
+The project SHALL have a deploy-prod GitHub Actions workflow that triggers via manual `workflow_dispatch` with an optional commit SHA input. The workflow SHALL check out the specified commit (or latest main). The workflow SHALL first run database migrations against the prod Supabase Postgres using `drizzle-kit migrate` (Node.js + `postgres-js` over the Supavisor session pooler, which provides IPv4 connectivity). If migrations fail, the workflow SHALL exit and the deploy SHALL NOT proceed. If migrations succeed, the workflow SHALL run `wrangler deploy` to deploy to the prod Cloudflare Pages project (`dnd-weekend`). The `DATABASE_URL` GitHub secret SHALL contain the Supavisor session pooler connection string (IPv4), not the direct connection string (IPv6-only).
 
 ### Requirement: Two deployment environments
 

@@ -47,8 +47,8 @@
 
 ## 6. Update GitHub Workflows
 
-- [x] 6.1 Rewrite `.github/workflows/deploy-test.yml` — checkout, install, build, then `wrangler deploy` (migrations run manually by developer before deploy, not in CI — Supabase direct connection is IPv6-only, unreachable from GitHub Actions runners)
-- [x] 6.2 Rewrite `.github/workflows/deploy-prod.yml` — checkout (optional commit SHA input), install, build, configure prod config, then `wrangler deploy` (migrations run manually by developer before deploy)
+- [x] 6.1 Rewrite `.github/workflows/deploy-test.yml` — checkout, install, run `db:migrate` against test DB (using Supavisor session pooler `DATABASE_URL_TEST` secret, IPv4), build, then `wrangler deploy`; fail workflow if migrations fail
+- [x] 6.2 Rewrite `.github/workflows/deploy-prod.yml` — checkout (optional commit SHA input), install, run `db:migrate` against prod DB (using Supavisor session pooler `DATABASE_URL_PROD` secret, IPv4), build, configure prod config, then `wrangler deploy`; fail workflow if migrations fail
 - [x] 6.3 GitHub secrets created by user: `DATABASE_URL_TEST`, `DATABASE_URL_PROD`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
 - [x] 6.4 Verify `ci.yml` still passes (lint, typecheck, test) — removed `esbuild` rebuild step, all checks pass
 

@@ -68,16 +68,17 @@ The tRPC fetch adapter and `jose` JWT verification are already runtime-agnostic 
 - *Keep `apps/server` as a separate package*: The Vite plugin would need to import from it, adding workspace resolution complexity. The server package would have no independent build or deploy target anymore.
 - *Worker at root*: A `wrangler.jsonc` at the repo root. Conflicts with the monorepo structure and makes the Vite plugin harder to configure.
 
-### 5. Migrations run manually by the developer
+### 5. Migrations as pre-deploy gate in GitHub Actions via Supavisor pooler
 
-**Choice**: The developer runs `pnpm --filter @dnd-weekend/api db:migrate` locally (using `DATABASE_URL` from `.env`) before triggering a deploy. Both `deploy-test.yml` and `deploy-prod.yml` workflows build and deploy only — they do not run migrations.
+**Choice**: Both `deploy-test.yml` and `deploy-prod.yml` workflows run `drizzle-kit migrate` (Node.js + `postgres-js`) before `wrangler deploy`. The `DATABASE_URL` GitHub secret contains the Supavisor **session pooler** connection string (IPv4), not the direct connection string (IPv6-only). If migrations fail, the workflow exits non-zero and the deploy step never runs.
 
-**Why**: GitHub Actions runners cannot reach Supabase Postgres over IPv6-only direct connection strings, and the Supabase connection pooler requires tenant configuration not yet available for this project. Running migrations locally from the developer's machine (which has IPv6 connectivity) is the pragmatic path. Migrations remain additive and backward-compatible, so the code and DB can be updated independently without downtime. The `DATABASE_URL_TEST` and `DATABASE_URL_PROD` GitHub secrets are no longer needed by the deploy workflows.
+**Why**: Supabase's direct database hostname (`db.[project-ref].supabase.co`) resolves to IPv6 only on the free tier. GitHub Actions runners have no IPv6 outbound. The Supavisor session pooler (`aws-[region].pooler.supabase.com:5432`) provides IPv4 connectivity and supports prepared statements (required by `drizzle-kit migrate`). The pooler hostname/region must be copied from the Supabase dashboard "Connect" button — it is not derivable from the project ref.
 
 **Alternatives considered**:
-- *Migrations as a pre-deploy gate in GitHub Actions*: The original design. Blocked by GitHub Actions runners lacking IPv6 connectivity to Supabase's direct connection hostname. Could be revisited later by configuring the Supabase connection pooler (IPv4) or a tunnel.
+- *Manual local migrations*: Developer runs `pnpm db:migrate` before deploy. Error-prone, no audit trail, no gate. Used temporarily while the pooler connection issue was being diagnosed.
 - *Migration Worker*: Run migrations inside a Worker endpoint. Requires Hyperdrive or HTTP driver, adds complexity, and running DDL from an edge Worker is an anti-pattern.
 - *`drizzle-kit push`*: Schema-to-DB diff without migration files. Loses migration history and auditability.
+- *Supabase CLI (`supabase db push`)*: Uses a separate migration tracking system incompatible with Drizzle's `drizzle` schema migration journal. Would require maintaining two sets of migration files.
 
 ### 6. Two Pages projects, two manual workflows
 

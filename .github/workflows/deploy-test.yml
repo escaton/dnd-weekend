@@ -18,6 +18,11 @@ jobs:
 
       - run: pnpm install --frozen-lockfile --ignore-scripts
 
+      - name: Run database migrations
+        run: pnpm --filter @dnd-weekend/api db:migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_TEST }}
+
       - name: Build
         run: pnpm --filter @dnd-weekend/web build
 
