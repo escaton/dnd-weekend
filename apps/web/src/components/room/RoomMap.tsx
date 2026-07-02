@@ -39,16 +39,16 @@ function Canvas() {
       // Only pan on truly empty canvas — not over a shape or selection bounds.
       // The tool's Idle state re-classifies "canvas" hits as "shape" after
       // before-event fires, so we must hit-test ourselves here.
-      const pagePoint = editor.screenToPage(info.point);
-      const hitShape = editor.getShapeAtPoint(pagePoint, {
-        margin: editor.options.hitTestMargin / editor.getZoomLevel(),
-      });
-      if (hitShape) return;
+      // const pagePoint = editor.screenToPage(info.point);
+      // const hitShape = editor.getShapeAtPoint(pagePoint, {
+      //   margin: editor.options.hitTestMargin / editor.getZoomLevel(),
+      // });
+      // if (hitShape) return;
 
-      const selectionBounds = editor.getSelectionRotatedPageBounds();
-      if (selectionBounds?.containsPoint(pagePoint)) return;
+      // const selectionBounds = editor.getSelectionRotatedPageBounds();
+      // if (selectionBounds?.containsPoint(pagePoint)) return;
 
-      (editor.inputs as unknown as { setIsPanning: (v: boolean) => void }).setIsPanning(true);
+      // (editor.inputs as unknown as { setIsPanning: (v: boolean) => void }).setIsPanning(true);
     }
 
     function onEvent(info: TLEventInfo) {
@@ -58,18 +58,18 @@ function Canvas() {
       if (info.type !== "pointer" || info.name !== "pointer_up") return;
       if (info.shiftKey || info.accelKey) return;
 
-      const pagePoint = editor.screenToPage(info.point);
-      const hitShape = editor.getShapeAtPoint(pagePoint, {
-        margin: editor.options.hitTestMargin / editor.getZoomLevel(),
-      });
-      if (hitShape) return;
+      // const pagePoint = editor.screenToPage(info.point);
+      // const hitShape = editor.getShapeAtPoint(pagePoint, {
+      //   margin: editor.options.hitTestMargin / editor.getZoomLevel(),
+      // });
+      // if (hitShape) return;
 
-      const selectionBounds = editor.getSelectionRotatedPageBounds();
-      if (selectionBounds?.containsPoint(pagePoint)) return;
+      // const selectionBounds = editor.getSelectionRotatedPageBounds();
+      // if (selectionBounds?.containsPoint(pagePoint)) return;
 
-      if (editor.getSelectedShapeIds().length > 0) {
-        editor.selectNone();
-      }
+      // if (editor.getSelectedShapeIds().length > 0) {
+      //   editor.selectNone();
+      // }
     }
 
     editor.on("before-event", onBeforeEvent);
