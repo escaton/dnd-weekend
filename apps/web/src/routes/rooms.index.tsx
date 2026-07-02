@@ -1,9 +1,13 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { supabase } from "../lib/supabase";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Plus, Users } from "lucide-react";
 import { useTRPC } from "../lib/trpc";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import styles from "../styles/rooms.module.css";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
+import { Card } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { toast } from "../components/ui/sonner";
 
 export const Route = createFileRoute("/rooms/")({
   component: RoomsPage,
@@ -18,16 +22,17 @@ function RoomsPage() {
   const createMutation = useMutation(
     trpc.room.create.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: trpc.room.list.queryKey() });
+        queryClient.invalidateQueries({
+          queryKey: trpc.room.list.queryKey(),
+        });
         setTitle("");
+        toast.success("Room created");
+      },
+      onError: (error) => {
+        toast.error(error.message);
       },
     }),
   );
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/sign-in";
-  };
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -37,52 +42,49 @@ function RoomsPage() {
   }
 
   return (
-    <div className={styles.container}>
-      <header className={styles.header}>
-        <h1>Rooms</h1>
-        <div className={styles.nav}>
-          <a href="/characters" className={styles.navLink}>
-            Characters
-          </a>
-          <button className={styles.signOut} onClick={handleSignOut}>
-            Sign out
-          </button>
-        </div>
-      </header>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">Rooms</h1>
 
-      <form className={styles.form} onSubmit={handleSubmit}>
-        <input
-          className={styles.input}
+      <form className="flex gap-2" onSubmit={handleSubmit}>
+        <Input
           type="text"
           placeholder="Room title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           disabled={createMutation.isPending}
         />
-        <button className={styles.button} type="submit" disabled={createMutation.isPending}>
-          Create room
-        </button>
-        {createMutation.error && <p className={styles.error}>{createMutation.error.message}</p>}
+        <Button type="submit" disabled={createMutation.isPending || !title.trim()}>
+          <Plus className="h-4 w-4" />
+          Create
+        </Button>
       </form>
 
-      {listQuery.isPending && <p className={styles.empty}>Loading...</p>}
-      {listQuery.isError && <p className={styles.empty}>Error loading rooms</p>}
+      {listQuery.isPending && <p className="text-muted-foreground">Loading...</p>}
+      {listQuery.isError && <p className="text-muted-foreground">Error loading rooms</p>}
       {listQuery.data && listQuery.data.length === 0 && (
-        <p className={styles.empty}>No rooms yet. Create one above.</p>
+        <p className="text-muted-foreground">No rooms yet. Create one above.</p>
       )}
       {listQuery.data && listQuery.data.length > 0 && (
-        <ul className={styles.list}>
+        <div className="flex flex-col gap-2">
           {listQuery.data.map((room) => (
-            <li key={room.id}>
-              <a href={`/rooms/${room.id}`} className={styles.roomCard}>
-                <span className={styles.roomTitle}>{room.title}</span>
-                <span className={styles.roomMeta}>
-                  {room.role} · {room.memberCount} member{room.memberCount === 1 ? "" : "s"}
-                </span>
-              </a>
-            </li>
+            <Link key={room.id} to="/rooms/$id" params={{ id: room.id }} className="block">
+              <Card className="flex items-center justify-between p-4 transition-colors hover:bg-accent">
+                <div className="flex flex-col gap-1">
+                  <span className="font-semibold">{room.title}</span>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Badge variant={room.role === "game-master" ? "default" : "secondary"}>
+                      {room.role === "game-master" ? "GM" : "Player"}
+                    </Badge>
+                    <span className="flex items-center gap-1">
+                      <Users className="h-3.5 w-3.5" />
+                      {room.memberCount}
+                    </span>
+                  </div>
+                </div>
+              </Card>
+            </Link>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

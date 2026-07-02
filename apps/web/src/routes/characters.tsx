@@ -2,7 +2,6 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase } from "../lib/supabase";
 import CharacterList from "../components/CharacterList";
 import NewCharacterForm from "../components/NewCharacterForm";
-import styles from "../styles/characters.module.css";
 
 export const Route = createFileRoute("/characters")({
   beforeLoad: async () => {
@@ -18,24 +17,9 @@ export const Route = createFileRoute("/characters")({
 });
 
 function CharactersPage() {
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/sign-in";
-  };
-
   return (
-    <div className={styles.container}>
-      <header className={styles.header}>
-        <h1>Characters</h1>
-        <div className={styles.nav}>
-          <a href="/rooms" className={styles.navLink}>
-            Rooms
-          </a>
-          <button className={styles.signOut} onClick={handleSignOut}>
-            Sign out
-          </button>
-        </div>
-      </header>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">Characters</h1>
       <NewCharacterForm />
       <CharacterList />
     </div>

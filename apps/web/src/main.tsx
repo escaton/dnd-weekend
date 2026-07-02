@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 import { debugLogin } from "./lib/debug-auth";
+import "./styles/globals.css";
 
 const router = createRouter({ routeTree });
 
