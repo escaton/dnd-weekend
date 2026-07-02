@@ -51,8 +51,33 @@ function Canvas() {
       (editor.inputs as unknown as { setIsPanning: (v: boolean) => void }).setIsPanning(true);
     }
 
+    function onEvent(info: TLEventInfo) {
+      // Safety net: isPanning can prevent the select tool's PointingCanvas
+      // from firing selectOnCanvasPointerUp on pointer_up. Ensure deselect
+      // on tap of empty canvas (no shape, not on selection bounds).
+      if (info.type !== "pointer" || info.name !== "pointer_up") return;
+      if (info.shiftKey || info.accelKey) return;
+
+      const pagePoint = editor.screenToPage(info.point);
+      const hitShape = editor.getShapeAtPoint(pagePoint, {
+        margin: editor.options.hitTestMargin / editor.getZoomLevel(),
+      });
+      if (hitShape) return;
+
+      const selectionBounds = editor.getSelectionRotatedPageBounds();
+      if (selectionBounds?.containsPoint(pagePoint)) return;
+
+      if (editor.getSelectedShapeIds().length > 0) {
+        editor.selectNone();
+      }
+    }
+
     editor.on("before-event", onBeforeEvent);
-    return () => editor.off("before-event", onBeforeEvent);
+    editor.on("event", onEvent);
+    return () => {
+      editor.off("before-event", onBeforeEvent);
+      editor.off("event", onEvent);
+    };
   }
 
   function handleAddBox() {
