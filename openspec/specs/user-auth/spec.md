@@ -63,9 +63,13 @@ The system SHALL provide a sign-out action that clears the user's session on bot
 
 ## Debug User Credentials
 
-The following debug user is pre-created in Supabase Auth (both test and prod projects):
+The following debug users are pre-created in Supabase Auth (both test and prod projects):
 
 - **Email:** `debug@dnd-weekend.local`
 - **Password:** `111111`
+- **Email:** `debug2@dnd-weekend.local`
+- **Password:** `111111`
+- **Email:** `debug3@dnd-weekend.local`
+- **Password:** `111111`
 
-These credentials are intentionally stored in the open — this is a personal DnD tool with no sensitive data at risk. The debug user has the same privileges as any Google-authenticated user (can create and manage characters).
+These credentials are intentionally stored in the open — this is a personal DnD tool with no sensitive data at risk. The debug users have the same privileges as any Google-authenticated user (can create and manage characters, rooms).

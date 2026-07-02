@@ -17,11 +17,13 @@ pnpm test
 
 ## Testing against Supabase
 
-Use the existing debug user — do **not** create temporary users in Supabase Auth.
+Use the existing debug users — do **not** create temporary users in Supabase Auth.
 
-- Email: `debug@dnd-weekend.local`
-- Password: `111111`
-- These credentials are documented openly in `openspec/specs/user-auth/spec.md`
+- `debug@dnd-weekend.local` / `111111`
+- `debug2@dnd-weekend.local` / `111111`
+- `debug3@dnd-weekend.local` / `111111`
+
+These credentials are documented openly in `openspec/specs/user-auth/spec.md`
 
 If you need anything from the Supabase dashboard (connection strings, API keys, pooler config, enabling features, etc.), **do not attempt to do it yourself**. Ask the user and guide them on exactly what to do and where to find it.
 

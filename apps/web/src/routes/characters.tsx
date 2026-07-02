@@ -27,9 +27,14 @@ function CharactersPage() {
     <div className={styles.container}>
       <header className={styles.header}>
         <h1>Characters</h1>
-        <button className={styles.signOut} onClick={handleSignOut}>
-          Sign out
-        </button>
+        <div className={styles.nav}>
+          <a href="/rooms" className={styles.navLink}>
+            Rooms
+          </a>
+          <button className={styles.signOut} onClick={handleSignOut}>
+            Sign out
+          </button>
+        </div>
       </header>
       <NewCharacterForm />
       <CharacterList />

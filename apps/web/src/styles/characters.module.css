@@ -11,6 +11,18 @@
   margin-bottom: 2rem;
 }
 
+.nav {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.navLink {
+  text-decoration: none;
+  color: inherit;
+  font-size: 0.875rem;
+}
+
 .signOut {
   padding: 0.4rem 1rem;
   font-size: 0.875rem;
