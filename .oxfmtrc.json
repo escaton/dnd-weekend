@@ -3,6 +3,7 @@
   "ignorePatterns": [
     "openspec/**",
     ".opencode/**",
+    ".agents/**",
     "**/worker-configuration.d.ts",
     "**/.wrangler/**",
     "**/routeTree.gen.ts"
