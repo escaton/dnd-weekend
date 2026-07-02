@@ -4,7 +4,7 @@
 
 The system SHALL provide Google sign-in using Supabase OAuth. The sign-in flow SHALL be combined: if no account exists for the Google user, one SHALL be created automatically on first sign-in. There SHALL be no separate registration flow.
 
-Additionally, the system SHALL expose an invisible email/password login method via `window.__debugLogin(email, password)` for debugging and automated testing. This method SHALL call `supabase.auth.signInWithPassword()` and navigate to the app on success. The method SHALL be available in all environments. It SHALL NOT be visible in the UI — no buttons, forms, or visible elements. Debug users SHALL be pre-created in Supabase Auth; their credentials SHALL be documented in the spec.
+Additionally, the system SHALL expose an invisible email/password login method via `window.__debugLogin(email, password)` for debugging and automated testing. This method SHALL call `supabase.auth.signInWithPassword()` and navigate to the app on success. The method SHALL return the JWT access token so it can be reused for API testing (e.g. with curl). The method SHALL be available in all environments. It SHALL NOT be visible in the UI — no buttons, forms, or visible elements. Debug users SHALL be pre-created in Supabase Auth; their credentials SHALL be documented in the spec.
 
 #### Scenario: First-time user signs in with Google
 - **WHEN** a user clicks "Sign in with Google" and completes Google OAuth
@@ -26,6 +26,7 @@ Additionally, the system SHALL expose an invisible email/password login method v
 - **WHEN** `window.__debugLogin(email, password)` is called with valid credentials
 - **THEN** the system SHALL call `supabase.auth.signInWithPassword()` with the given email and password
 - **AND** on success SHALL navigate to `/characters`
+- **AND** on success SHALL return the JWT access token
 - **AND** on failure SHALL throw the error from Supabase Auth
 
 #### Scenario: Debug login with invalid credentials

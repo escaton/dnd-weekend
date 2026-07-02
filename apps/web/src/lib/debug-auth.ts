@@ -7,7 +7,7 @@ export async function debugLogin(email: string, password: string) {
   });
   if (error) throw error;
   window.location.href = "/characters";
-  return data;
+  return data.session?.access_token;
 }
 
 declare global {
