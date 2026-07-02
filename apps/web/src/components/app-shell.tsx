@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Dices, DoorOpen, LogOut, Menu, Users, type LucideIcon } from "lucide-react";
 import { useTRPC } from "../lib/trpc";
 import { supabase } from "../lib/supabase";
-import { Avatar, AvatarFallback } from "./ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -64,7 +64,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     enabled: !isSignInPage,
   });
 
-  const userEmail = authQuery.data?.email ?? null;
+  const userData = authQuery.data ?? null;
+  const displayName = userData?.displayName ?? userData?.email ?? null;
+  const avatarUrl = userData?.avatarUrl ?? null;
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -80,7 +82,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     );
   }
 
-  const initials = userEmail ? (userEmail[0]?.toUpperCase() ?? "?") : "?";
+  const initials = displayName ? (displayName[0]?.toUpperCase() ?? "?") : "?";
   const isActive = (to: string) => pathname === to || pathname.startsWith(`${to}/`);
 
   return (
@@ -108,13 +110,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="w-full justify-start gap-2 min-h-[44px]">
                 <Avatar className="h-8 w-8">
+                  <AvatarImage src={avatarUrl ?? undefined} alt={displayName ?? "User"} />
                   <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
-                <span className="truncate text-sm">{userEmail ?? "User"}</span>
+                <span className="truncate text-sm">{displayName ?? "User"}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56">
-              <DropdownMenuLabel className="truncate">{userEmail}</DropdownMenuLabel>
+              <DropdownMenuLabel className="truncate">{displayName}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleSignOut} className="min-h-[44px] text-destructive">
                 <LogOut className="h-4 w-4" />
@@ -137,9 +140,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-72 p-0">
+            <SheetContent side="right" className="w-72 p-0">
               <SheetTitle className="sr-only">Navigation</SheetTitle>
-              <div className="flex items-center gap-2 px-6 h-16 border-b border-border">
+              <div className="flex items-center gap-2 px-4 h-16 border-b border-border">
                 <Dices className="h-6 w-6 text-primary" />
                 <span className="font-semibold text-foreground">DnD Weekend</span>
               </div>
@@ -160,9 +163,10 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className="mt-auto p-4 border-t border-border">
                 <div className="flex items-center gap-2 px-3 py-2">
                   <Avatar className="h-8 w-8">
+                    <AvatarImage src={avatarUrl ?? undefined} alt={displayName ?? "User"} />
                     <AvatarFallback>{initials}</AvatarFallback>
                   </Avatar>
-                  <span className="truncate text-sm">{userEmail ?? "User"}</span>
+                  <span className="truncate text-sm">{displayName ?? "User"}</span>
                 </div>
                 <Button
                   variant="ghost"

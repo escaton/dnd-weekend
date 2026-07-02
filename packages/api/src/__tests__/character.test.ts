@@ -4,7 +4,7 @@ import type { Context } from "../trpc";
 
 function createMockContext(overrides: Partial<Context> = {}): Context {
   return {
-    user: { id: "test-user", email: "test@test.com" },
+    user: { id: "test-user", email: "test@test.com", displayName: null, avatarUrl: null },
     db: {
       select: vi.fn(() => ({
         from: vi.fn(() => ({
@@ -48,6 +48,8 @@ describe("appRouter", () => {
     expect(result).toEqual({
       id: "test-user",
       email: "test@test.com",
+      displayName: null,
+      avatarUrl: null,
     });
   });
 

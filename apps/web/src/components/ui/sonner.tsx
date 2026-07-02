@@ -7,8 +7,9 @@ function Toaster({ ...props }: ToasterProps) {
   return (
     <SonnerToaster
       theme="dark"
-      className="toaster group"
+      offset="64px"
       toastOptions={{
+        duration: 1500,
         classNames: {
           toast:
             "group toast group-[.toaster]:bg-card group-[.toaster]:text-card-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",

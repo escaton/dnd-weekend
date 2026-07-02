@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 @theme inline {
   --color-background: hsl(var(--background));
@@ -69,4 +70,35 @@
 *:focus-visible {
   outline: 2px solid hsl(var(--ring)) !important;
   outline-offset: 2px;
+}
+
+[data-sonner-toast] {
+  background: hsl(var(--card)) !important;
+  color: hsl(var(--card-foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: var(--radius-md);
+}
+
+[data-sonner-toast][data-type="success"] {
+  border-color: hsl(142 60% 40%) !important;
+}
+
+[data-sonner-toast][data-type="success"] .sonner-loading-bar {
+  background: hsl(142 60% 50%) !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-icon] {
+  color: hsl(142 60% 50%) !important;
+}
+
+[data-sonner-toast][data-type="error"] {
+  border-color: hsl(var(--destructive)) !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-icon] {
+  color: hsl(var(--destructive)) !important;
+}
+
+[data-sonner-toast] [data-description] {
+  color: hsl(var(--muted-foreground)) !important;
 }

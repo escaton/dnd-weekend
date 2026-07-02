@@ -1,5 +1,12 @@
-import { pgTable, uuid, text, jsonb, timestamp, index } from "drizzle-orm/pg-core";
+import { pgTable, pgSchema, uuid, text, jsonb, timestamp, index } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+
+export const authSchema = pgSchema("auth");
+
+export const authUsers = authSchema.table("users", {
+  id: uuid("id").primaryKey(),
+  rawUserMetaData: jsonb("raw_user_meta_data"),
+});
 
 export const characters = pgTable(
   "characters",

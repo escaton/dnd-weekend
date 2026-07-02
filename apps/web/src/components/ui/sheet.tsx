@@ -39,7 +39,7 @@ const SheetOverlay = forwardRef<
 SheetOverlay.displayName = DialogOverlayPrimitive.displayName;
 
 const sheetVariants = cva(
-  "fixed z-50 gap-4 bg-card p-6 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out",
+  "fixed z-50 gap-4 bg-card p-6 shadow-2xl shadow-black/40 transition ease-out data-[state=closed]:duration-300 data-[state=closed]:ease-in data-[state=open]:duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out",
   {
     variants: {
       side: {
@@ -72,7 +72,7 @@ const SheetContent = forwardRef<ElementRef<typeof DialogContentPrimitive>, Sheet
         {...props}
       >
         {children}
-        <DialogClosePrimitive className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+        <DialogClosePrimitive className="absolute right-4 top-2.5 flex h-11 w-11 items-center justify-center rounded-md opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
         </DialogClosePrimitive>

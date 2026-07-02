@@ -7,7 +7,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import { Avatar, AvatarFallback } from "../components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -216,10 +216,11 @@ function RoomDetailPage() {
             >
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarFallback>{member.email[0]?.toUpperCase() ?? "?"}</AvatarFallback>
+                  <AvatarImage src={member.avatarUrl ?? undefined} alt={member.displayName} />
+                  <AvatarFallback>{member.displayName[0]?.toUpperCase() ?? "?"}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col gap-1">
-                  <span className="font-medium">{member.email}</span>
+                  <span className="font-medium">{member.displayName}</span>
                   <div className="flex items-center gap-2">
                     <Badge variant={member.role === "game-master" ? "default" : "secondary"}>
                       {member.role === "game-master" ? "GM" : "Player"}

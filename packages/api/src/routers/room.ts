@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
-import { characters, rooms, roomMembers } from "../db/schema.js";
+import { characters, rooms, roomMembers, authUsers } from "../db/schema.js";
 import { protectedProcedure, router } from "../trpc.js";
 import type { DB } from "../trpc.js";
 
@@ -120,9 +120,14 @@ export const roomRouter = router({
           characterName: characters.content,
           invitedBy: roomMembers.invitedBy,
           joinedAt: roomMembers.joinedAt,
+          displayName: sql<string>`coalesce(${authUsers.rawUserMetaData}->>'full_name', ${authUsers.rawUserMetaData}->>'name', ${roomMembers.email})`,
+          avatarUrl: sql<
+            string | null
+          >`coalesce(${authUsers.rawUserMetaData}->>'avatar_url', ${authUsers.rawUserMetaData}->>'picture')`,
         })
         .from(roomMembers)
         .leftJoin(characters, eq(characters.id, roomMembers.characterId))
+        .leftJoin(authUsers, eq(authUsers.id, roomMembers.userId))
         .where(and(eq(roomMembers.roomId, input.id), isNull(roomMembers.deletedAt)));
 
       return { ...room, members };
